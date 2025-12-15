@@ -232,3 +232,30 @@ export const updateOrderEmailStatus = mutation({
     await ctx.db.patch(order._id, { emailSent: args.emailSent });
   }
 });
+
+/**
+ * Retrieves all unique address IDs from existing orders.
+ * Used to filter out already-gifted addresses when identifying new ones.
+ *
+ * @returns Array of unique address IDs (e.g., "osm_way_123456")
+ */
+export const getAllGiftedAddressIds = query({
+  args: {},
+  handler: async (ctx) => {
+    const orders = await ctx.db.query("orders").collect();
+    const addressIds = new Set<string>();
+
+    for (const order of orders) {
+      try {
+        const addr = JSON.parse(order.shippingAddress);
+        if (addr.id) {
+          addressIds.add(addr.id);
+        }
+      } catch {
+        // Skip malformed JSON
+      }
+    }
+
+    return Array.from(addressIds);
+  }
+});

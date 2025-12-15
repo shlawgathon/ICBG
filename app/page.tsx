@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { useMutation } from "convex/react";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import * as turf from "@turf/turf";
 import { GlobeMap } from "@/components/GlobeMap";
@@ -81,7 +81,9 @@ export default function HomePage() {
   const [confirmedBatchId, setConfirmedBatchId] = useState<string | undefined>();
   const [showDeliveryLines, setShowDeliveryLines] = useState(false);
 
-  // Convex mutations
+  // Convex queries and mutations
+  const giftedAddressIdsRaw = useQuery(api.orders.getAllGiftedAddressIds);
+  const giftedAddressIds = useMemo(() => giftedAddressIdsRaw ?? [], [giftedAddressIdsRaw]);
   const createBatch = useMutation(api.orderBatches.createBatch);
   const createOrders = useMutation(api.orders.createOrdersBatch);
 
@@ -181,13 +183,19 @@ export default function HomePage() {
       }
 
       const data = await response.json();
-      setAddresses(data.addresses);
+      
+      // Filter out addresses that have already received gifts
+      const giftedSet = new Set(giftedAddressIds);
+      const newAddresses = data.addresses.filter(
+        (addr: Address) => !giftedSet.has(addr.id)
+      );
+      setAddresses(newAddresses);
     } catch (error) {
       console.error("Address identification error:", error);
     } finally {
       setIsLoadingAddresses(false);
     }
-  }, []);
+  }, [giftedAddressIds]);
 
   /**
    * Clears the current selection and resets state.

@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Home, Users, Baby, User } from "lucide-react";
+import { Home, ExternalLink } from "lucide-react";
 import type { Address } from "@/lib/types";
 
 /**
@@ -17,8 +17,28 @@ type AddressListProps = {
 };
 
 /**
+ * Generates a Google Maps search URL for an address.
+ * Uses the full address string for better place matching.
+ *
+ * @param address - Address to generate URL for
+ * @returns Google Maps URL
+ */
+function getGoogleMapsUrl(address: Address): string {
+  const fullAddress = [
+    address.streetAddress,
+    address.city,
+    address.state,
+    address.postalCode
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
+}
+
+/**
  * AddressList displays identified addresses within the selected area.
- * Shows household metadata and supports scrolling for long lists.
+ * Addresses are clickable and open in Google Maps.
  *
  * @param addresses - Identified addresses
  * @param isLoading - Loading state
@@ -46,10 +66,6 @@ export function AddressList({ addresses, isLoading }: AddressListProps) {
               <div key={i} className="space-y-2">
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-3 w-1/2" />
-                <div className="flex gap-2">
-                  <Skeleton className="h-5 w-16" />
-                  <Skeleton className="h-5 w-14" />
-                </div>
               </div>
             ))}
           </div>
@@ -64,37 +80,26 @@ export function AddressList({ addresses, isLoading }: AddressListProps) {
           <>
             <div className="space-y-2">
               {addresses.map((address) => (
-                <div key={address.id} className="p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
-                  <p className="font-medium text-sm leading-tight">{address.streetAddress || "Unknown Address"}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {[address.city, address.state, address.postalCode].filter(Boolean).join(", ") || "Location pending"}
-                  </p>
-
-                  {/* Household metadata badges */}
-                  {address.metadata && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {address.metadata.householdType && (
-                        <Badge variant="outline" className="text-xs gap-1 py-0">
-                          {address.metadata.householdType === "family" && <Users className="w-3 h-3" />}
-                          {address.metadata.householdType === "single" && <User className="w-3 h-3" />}
-                          {address.metadata.householdType === "elderly" && <User className="w-3 h-3" />}
-                          {address.metadata.householdType}
-                        </Badge>
-                      )}
-                      {address.metadata.hasChildren && (
-                        <Badge variant="outline" className="text-xs gap-1 py-0 border-accent/50 text-accent-foreground">
-                          <Baby className="w-3 h-3" />
-                          Children
-                        </Badge>
-                      )}
-                      {address.metadata.estimatedAge && (
-                        <Badge variant="secondary" className="text-xs py-0">
-                          {address.metadata.estimatedAge}
-                        </Badge>
-                      )}
+                <a
+                  key={address.id}
+                  href={getGoogleMapsUrl(address)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 hover:border-primary/50 transition-colors group cursor-pointer"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm leading-tight group-hover:text-primary transition-colors">
+                        {address.streetAddress || "Unknown Address"}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {[address.city, address.state, address.postalCode].filter(Boolean).join(", ") ||
+                          "Location pending"}
+                      </p>
                     </div>
-                  )}
-                </div>
+                    <ExternalLink className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary shrink-0 mt-0.5 transition-colors" />
+                  </div>
+                </a>
               ))}
             </div>
 
