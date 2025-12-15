@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import * as turf from "@turf/turf";
@@ -76,6 +76,52 @@ export default function HomePage() {
   const handleDrawingToggle = useCallback(() => {
     setIsDrawing((prev) => !prev);
   }, []);
+
+  /**
+   * Keyboard hotkeys for draw mode control.
+   *
+   * Supported hotkeys:
+   * - 'D' key: Toggle drawing mode on/off
+   * - 'Escape' key: Exit drawing mode (if active)
+   *
+   * Hotkeys are disabled when focus is on input elements to prevent
+   * accidental triggering while typing.
+   */
+  useEffect(() => {
+    /**
+     * Handles keydown events for draw mode hotkeys.
+     * @param event - The keyboard event
+     */
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ignore hotkeys when typing in input fields, textareas, or contenteditable elements
+      const target = event.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      // 'D' key toggles drawing mode
+      if (event.key === "d" || event.key === "D") {
+        event.preventDefault();
+        setIsDrawing((prev) => !prev);
+      }
+
+      // 'Escape' key exits drawing mode
+      if (event.key === "Escape" && isDrawing) {
+        event.preventDefault();
+        setIsDrawing(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isDrawing]);
 
   /**
    * Handles completed polygon selection.
