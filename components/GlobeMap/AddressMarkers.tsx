@@ -2,8 +2,7 @@
 
 import { Marker } from "react-map-gl/mapbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
-import { Home, Users, Baby } from "lucide-react";
+import { Home } from "lucide-react";
 import type { Address } from "@/lib/types";
 
 /**
@@ -19,7 +18,7 @@ type AddressMarkersProps = {
 /**
  * AddressMarkers displays gift delivery locations on the map.
  * Each marker shows a festive gift icon with hover tooltip
- * containing address details and household metadata.
+ * containing address details.
  *
  * @param addresses - Addresses to display
  * @param onMarkerClick - Optional click handler
@@ -39,7 +38,7 @@ export function AddressMarkers({ addresses, onMarkerClick }: AddressMarkersProps
               <button
                 onClick={() => onMarkerClick?.(address)}
                 className="relative group cursor-pointer transition-transform hover:scale-125 focus:outline-none focus:scale-125"
-                aria-label={`Address: ${address.streetAddress}`}
+                aria-label={`Address: ${address.streetAddress || "Unknown"}`}
               >
                 {/* Gift marker emoji */}
                 <span className="text-2xl drop-shadow-lg animate-pulse-festive">🎁</span>
@@ -49,41 +48,21 @@ export function AddressMarkers({ addresses, onMarkerClick }: AddressMarkersProps
               </button>
             </TooltipTrigger>
 
-            <TooltipContent side="top" className="max-w-xs bg-card border border-border shadow-lg">
-              <div className="space-y-2 p-1">
+            <TooltipContent side="top" className="max-w-xs bg-card text-card-foreground border border-border shadow-lg">
+              <div className="p-1">
                 {/* Address */}
                 <div className="flex items-start gap-2">
                   <Home className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium text-sm">{address.streetAddress}</p>
+                    <p className="font-medium text-sm text-card-foreground">
+                      {address.streetAddress || "Unknown Address"}
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      {[address.city, address.state, address.postalCode].filter(Boolean).join(", ")}
+                      {[address.city, address.state, address.postalCode].filter(Boolean).join(", ") ||
+                        "Location pending"}
                     </p>
                   </div>
                 </div>
-
-                {/* Household metadata */}
-                {address.metadata && (
-                  <div className="flex flex-wrap gap-1 pt-1">
-                    {address.metadata.householdType && (
-                      <Badge variant="outline" className="text-xs gap-1 border-secondary/50">
-                        <Users className="w-3 h-3" />
-                        {address.metadata.householdType}
-                      </Badge>
-                    )}
-                    {address.metadata.hasChildren && (
-                      <Badge variant="outline" className="text-xs gap-1 border-accent/50">
-                        <Baby className="w-3 h-3" />
-                        Children
-                      </Badge>
-                    )}
-                    {address.metadata.estimatedAge && (
-                      <Badge variant="secondary" className="text-xs capitalize">
-                        {address.metadata.estimatedAge}
-                      </Badge>
-                    )}
-                  </div>
-                )}
               </div>
             </TooltipContent>
           </Tooltip>
