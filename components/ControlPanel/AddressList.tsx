@@ -24,12 +24,7 @@ type AddressListProps = {
  * @returns Google Maps URL
  */
 function getGoogleMapsUrl(address: Address): string {
-  const fullAddress = [
-    address.streetAddress,
-    address.city,
-    address.state,
-    address.postalCode
-  ]
+  const fullAddress = [address.streetAddress, address.city, address.state, address.postalCode]
     .filter(Boolean)
     .join(", ");
 

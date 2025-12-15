@@ -156,46 +156,47 @@ export default function HomePage() {
    * Handles completed polygon selection.
    * Calculates area and triggers address identification.
    */
-  const handlePolygonComplete = useCallback(async (newPolygon: Polygon) => {
-    setPolygon(newPolygon);
-    setIsDrawing(false);
+  const handlePolygonComplete = useCallback(
+    async (newPolygon: Polygon) => {
+      setPolygon(newPolygon);
+      setIsDrawing(false);
 
-    // Calculate polygon info
-    const area = turf.area(newPolygon) / 1_000_000; // Convert to km²
-    const vertexCount = newPolygon.coordinates[0].length - 1; // Exclude closing point
-    setPolygonInfo({ area, vertexCount });
+      // Calculate polygon info
+      const area = turf.area(newPolygon) / 1_000_000; // Convert to km²
+      const vertexCount = newPolygon.coordinates[0].length - 1; // Exclude closing point
+      setPolygonInfo({ area, vertexCount });
 
-    // Identify addresses in polygon
-    setIsLoadingAddresses(true);
-    setAddresses([]);
-    setPairings([]);
-    setConfirmedBatchId(undefined);
+      // Identify addresses in polygon
+      setIsLoadingAddresses(true);
+      setAddresses([]);
+      setPairings([]);
+      setConfirmedBatchId(undefined);
 
-    try {
-      const response = await fetch("/api/addresses/identify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ polygon: newPolygon, limit: 50 })
-      });
+      try {
+        const response = await fetch("/api/addresses/identify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ polygon: newPolygon, limit: 50 })
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to identify addresses");
+        if (!response.ok) {
+          throw new Error("Failed to identify addresses");
+        }
+
+        const data = await response.json();
+
+        // Filter out addresses that have already received gifts
+        const giftedSet = new Set(giftedAddressIds);
+        const newAddresses = data.addresses.filter((addr: Address) => !giftedSet.has(addr.id));
+        setAddresses(newAddresses);
+      } catch (error) {
+        console.error("Address identification error:", error);
+      } finally {
+        setIsLoadingAddresses(false);
       }
-
-      const data = await response.json();
-      
-      // Filter out addresses that have already received gifts
-      const giftedSet = new Set(giftedAddressIds);
-      const newAddresses = data.addresses.filter(
-        (addr: Address) => !giftedSet.has(addr.id)
-      );
-      setAddresses(newAddresses);
-    } catch (error) {
-      console.error("Address identification error:", error);
-    } finally {
-      setIsLoadingAddresses(false);
-    }
-  }, [giftedAddressIds]);
+    },
+    [giftedAddressIds]
+  );
 
   /**
    * Clears the current selection and resets state.
@@ -263,8 +264,15 @@ export default function HomePage() {
   };
 
   /**
-   * Sends delivery notification emails.
-   * Always includes the demo email recipient (if configured) for demonstration purposes.
+   * Maximum recipients allowed per API request.
+   * Must match the MAX_RECIPIENTS constant in /api/notifications/send/route.ts
+   */
+  const NOTIFICATION_BATCH_SIZE = 50;
+
+  /**
+   * Sends delivery notification emails in batches.
+   * Always includes the demo email recipients (if configured) for demonstration purposes.
+   * Batches requests to comply with the API's 50-recipient limit per request.
    */
   const handleSendNotifications = useCallback(async () => {
     if (pairings.length === 0) return;
@@ -290,23 +298,42 @@ export default function HomePage() {
         name: config.name,
         address: config.address
       }));
-      const recipients = [...demoRecipients, ...syntheticRecipients];
 
-      const response = await fetch("/api/notifications/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipients, estimatedDelivery: getEstimatedDelivery() })
-      });
+      // Combine all recipients: demo recipients first, then synthetic
+      const allRecipients = [...demoRecipients, ...syntheticRecipients];
 
-      if (!response.ok) {
-        // Parse error response for better debugging
-        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
-        console.error("Notification API error:", errorData);
-        throw new Error(errorData.message || `Failed to send notifications (${response.status})`);
+      // Split recipients into batches of NOTIFICATION_BATCH_SIZE to comply with API limits
+      const batches: typeof allRecipients[] = [];
+      for (let i = 0; i < allRecipients.length; i += NOTIFICATION_BATCH_SIZE) {
+        batches.push(allRecipients.slice(i, i + NOTIFICATION_BATCH_SIZE));
       }
 
-      const data = await response.json();
-      setNotificationResults({ sent: data.sent, failed: data.failed });
+      // Aggregate results from all batches
+      let totalSent = 0;
+      let totalFailed = 0;
+
+      // Send each batch sequentially to avoid overwhelming the email service
+      for (const batch of batches) {
+        const response = await fetch("/api/notifications/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ recipients: batch, estimatedDelivery: getEstimatedDelivery() })
+        });
+
+        if (!response.ok) {
+          // Parse error response for better debugging
+          const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+          console.error("Notification API error:", errorData);
+          // Mark all recipients in this batch as failed, but continue with other batches
+          totalFailed += batch.length;
+        } else {
+          const data = await response.json();
+          totalSent += data.sent;
+          totalFailed += data.failed;
+        }
+      }
+
+      setNotificationResults({ sent: totalSent, failed: totalFailed });
     } catch (error) {
       console.error("Notification send error:", error);
       setNotificationResults({
