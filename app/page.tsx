@@ -13,25 +13,35 @@ import type { Address, GiftPairing } from "@/lib/types";
 import type { Polygon } from "geojson";
 
 /**
- * Demo/test email configuration.
- * This email is ALWAYS included in notification sends for demonstration purposes.
- * Set to undefined or empty string to disable the demo recipient.
+ * Demo/test email configurations.
+ * These emails are ALWAYS included in notification sends for demonstration purposes.
+ * Set to empty array to disable the demo recipients.
  *
  * @example
  * // To enable demo notifications:
- * const DEMO_EMAIL = "your-email@example.com";
+ * const DEMO_EMAIL_CONFIGS = [{ email: "test@example.com", name: "Test", address: "123 Test St" }];
  *
  * // To disable demo notifications:
- * const DEMO_EMAIL = undefined;
+ * const DEMO_EMAIL_CONFIGS = [];
  */
-const DEMO_EMAIL_CONFIG = {
-  /** Email address to receive demo notifications (set to undefined to disable) */
-  email: "aritrasray@gmail.com",
-  /** Display name for the demo recipient */
-  name: "Demo Recipient",
-  /** Demo address shown in the notification email */
-  address: "123 North Pole Lane, Santa's Workshop, Arctic Circle"
-} as const;
+const DEMO_EMAIL_CONFIGS = [
+  {
+    /** Email address to receive demo notifications */
+    email: "aritrasray@gmail.com",
+    /** Display name for the demo recipient */
+    name: "Aritra Saharay",
+    /** Demo address shown in the notification email */
+    address: "123 North Pole Lane, Santa's Workshop, Arctic Circle"
+  },
+  {
+    /** Email address to receive demo notifications */
+    email: "jerry.x093@gmail.com",
+    /** Display name for the demo recipient */
+    name: "Jerry Xiao",
+    /** Demo address shown in the notification email */
+    address: "456 Candy Cane Boulevard, Elf Village, North Pole"
+  }
+] as const;
 
 /**
  * Main application page for ICBG Mission Control.
@@ -250,17 +260,13 @@ export default function HomePage() {
         };
       });
 
-      // Always include demo email recipient if configured
-      const recipients = DEMO_EMAIL_CONFIG.email
-        ? [
-            {
-              email: DEMO_EMAIL_CONFIG.email,
-              name: DEMO_EMAIL_CONFIG.name,
-              address: DEMO_EMAIL_CONFIG.address
-            },
-            ...syntheticRecipients
-          ]
-        : syntheticRecipients;
+      // Always include demo email recipients if configured
+      const demoRecipients = DEMO_EMAIL_CONFIGS.map((config) => ({
+        email: config.email,
+        name: config.name,
+        address: config.address
+      }));
+      const recipients = [...demoRecipients, ...syntheticRecipients];
 
       const response = await fetch("/api/notifications/send", {
         method: "POST",
@@ -278,7 +284,7 @@ export default function HomePage() {
       console.error("Notification send error:", error);
       setNotificationResults({
         sent: 0,
-        failed: pairings.length + (DEMO_EMAIL_CONFIG.email ? 1 : 0)
+        failed: pairings.length + DEMO_EMAIL_CONFIGS.length
       });
     } finally {
       setIsSendingNotifications(false);
