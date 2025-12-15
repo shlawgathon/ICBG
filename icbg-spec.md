@@ -34,18 +34,29 @@
 │           │                    │                         │                  │
 │           └────────────────────┴─────────────────────────┘                  │
 │                                    │                                        │
-│                           React Query / SWR                                 │
+│                    React Query + Convex React Hooks                         │
 └────────────────────────────────────┼────────────────────────────────────────┘
-                                     │ HTTP/REST
+                                     │ HTTP/REST + WebSocket (Convex)
 ┌────────────────────────────────────┼────────────────────────────────────────┐
-│                              BACKEND (Next.js API Routes)                   │
+│                              BACKEND                                        │
 ├────────────────────────────────────┼────────────────────────────────────────┤
-│  ┌─────────────────┐  ┌────────────┴────────────┐  ┌─────────────────────┐  │
-│  │ Address Service │  │  Gift Pairing Service   │  │   Order Service     │  │
-│  │ (Overpass API + │  │  (Dedalus Labs SDK +    │  │   (Mock Amazon)     │  │
-│  │  Turf.js)       │  │   AgentMail MCP)        │  │                     │  │
-│  └─────────────────┘  └─────────────────────────┘  └─────────────────────┘  │
-│                                    │                                        │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                     Next.js API Routes                                │  │
+│  │  ┌─────────────────┐  ┌─────────────────────────┐  ┌───────────────┐  │  │
+│  │  │ Address Service │  │  Gift Pairing Service   │  │ Export Service│  │  │
+│  │  │ (Overpass API + │  │  (Dedalus Labs SDK +    │  │ (CSV from     │  │  │
+│  │  │  Turf.js)       │  │   AgentMail MCP)        │  │  Convex)      │  │  │
+│  │  └─────────────────┘  └─────────────────────────┘  └───────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                     Convex Backend (Real-time Database)               │  │
+│  │  ┌─────────────────┐  ┌─────────────────┐  ┌───────────────────────┐  │  │
+│  │  │ orderBatches    │  │     orders      │  │  addressSelections    │  │  │
+│  │  │ (batch mgmt)    │  │ (order history) │  │  (selection tracking) │  │  │
+│  │  └─────────────────┘  └─────────────────┘  └───────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
 │                           Dedalus Runner                                    │
 │                                    │                                        │
 └────────────────────────────────────┼────────────────────────────────────────┘
@@ -64,6 +75,7 @@
 | **Framework** | Next.js | 16.0.10 | Full-stack React framework with App Router |
 | **Language** | TypeScript | 5.7.x | Type-safe JavaScript |
 | **Runtime** | Node.js | 22.x LTS | Server-side JavaScript runtime |
+| **Database** | Convex | latest | Real-time backend database for persistent order history |
 | **Mapping** | Mapbox GL JS | 3.17.0 | Interactive WebGL maps |
 | **React Mapping** | react-map-gl | 8.1.0 | React wrapper for Mapbox GL JS |
 | **Draw Tools** | @mapbox/mapbox-gl-draw | 1.5.1 | Polygon drawing on maps |
@@ -610,65 +622,128 @@ in JSON format:
 
 ---
 
-### 5. Order Generation Service
+### 5. Order Generation Service (Convex Persistence)
 
-**Endpoint:** `POST /api/orders/create`
+**Convex Functions:** `orderBatches.createBatch`, `orders.createOrdersBatch`
 
 **Functionality:**
 
-This service generates mock order records that simulate what would be sent to Amazon's fulfillment system. Each order receives a unique identifier with a festive prefix, and the system tracks order status through a simple state machine.
+This service generates order records that are persisted to the Convex database. Each order receives a unique identifier with a festive prefix, and the system tracks order status through a simple state machine. Orders are stored durably and can be queried in real-time from any connected client. The order history survives page refreshes and browser restarts.
 
-**Request Schema:**
+**Client-Side Usage (Convex Mutations):**
+
+Orders are created directly from the frontend using Convex mutations, enabling real-time UI updates without REST round-trips.
 
 ```typescript
-type CreateOrdersRequest = {
-  /** Array of gift pairings to convert to orders */
-  pairings: GiftPairing[];
-  /** Full address details for shipping */
-  addresses: Address[];
-  /** Batch identifier for grouping orders */
-  batchId?: string;
-};
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { nanoid } from "nanoid";
+
+/**
+ * Hook for creating orders with Convex persistence.
+ * Returns a function that creates a batch and all associated orders.
+ */
+function useCreateOrders() {
+  const createBatch = useMutation(api.orderBatches.createBatch);
+  const createOrdersBatch = useMutation(api.orders.createOrdersBatch);
+
+  return async (pairings: GiftPairing[], addresses: Address[]) => {
+    const batchId = `BATCH-${nanoid(10).toUpperCase()}`;
+    const totalCost = pairings.reduce((sum, p) => sum + p.product.price, 0);
+
+    // Create batch first
+    await createBatch({
+      batchId,
+      totalCost,
+      orderCount: pairings.length,
+      estimatedDeliveryStart: "2025-12-23",
+      estimatedDeliveryEnd: "2025-12-24",
+    });
+
+    // Create all orders in single mutation
+    const orders = pairings.map((pairing) => {
+      const address = addresses.find((a) => a.id === pairing.addressId)!;
+      return {
+        orderId: `HOHOHO-${nanoid(10).toUpperCase()}`,
+        batchId,
+        shippingAddress: JSON.stringify(address),
+        productAsin: pairing.product.asin,
+        productName: pairing.product.name,
+        productPrice: pairing.product.price,
+        shippingCost: 0,
+        pairingReason: pairing.pairingReason,
+        estimatedDeliveryStart: "2025-12-23",
+        estimatedDeliveryEnd: "2025-12-24",
+      };
+    });
+
+    await createOrdersBatch({ orders });
+    return batchId;
+  };
+}
 ```
 
-**Response Schema:**
+**TypeScript Types (derived from Convex schema):**
 
 ```typescript
+/** Order as stored in Convex database */
 type Order = {
+  /** Convex document ID */
+  _id: Id<"orders">;
+  /** Creation timestamp (auto-generated by Convex) */
+  _creationTime: number;
   /** Unique order identifier with festive prefix */
   orderId: string;
-  /** Timestamp of order creation */
-  createdAt: string;
+  /** Parent batch identifier */
+  batchId: string;
   /** Current order status */
   status: 'ORDER_CREATED' | 'PENDING_FULFILLMENT' | 'SHIPPED' | 'DELIVERED';
-  /** Full shipping address */
-  shippingAddress: Address;
-  /** Product being shipped */
-  product: Product;
-  /** Estimated delivery window */
-  estimatedDelivery: {
-    earliest: string;
-    latest: string;
-  };
-  /** Order cost breakdown */
-  cost: {
-    productPrice: number;
-    shipping: number;
-    total: number;
-  };
+  /** Full shipping address (JSON stringified) */
+  shippingAddress: string;
+  /** Product ASIN */
+  productAsin: string;
+  /** Product name at order time */
+  productName: string;
+  /** Product price at order time */
+  productPrice: number;
+  /** Shipping cost */
+  shippingCost: number;
+  /** Total cost (product + shipping) */
+  totalCost: number;
+  /** AI-generated pairing reason */
+  pairingReason?: string;
+  /** Recipient email */
+  recipientEmail?: string;
+  /** Whether notification email was sent */
+  emailSent?: boolean;
+  /** Delivery window start (ISO string) */
+  estimatedDeliveryStart: string;
+  /** Delivery window end (ISO string) */
+  estimatedDeliveryEnd: string;
 };
 
-type CreateOrdersResponse = {
-  /** Batch identifier for all created orders */
+/** Order batch as stored in Convex database */
+type OrderBatch = {
+  /** Convex document ID */
+  _id: Id<"orderBatches">;
+  /** Creation timestamp (auto-generated by Convex) */
+  _creationTime: number;
+  /** Unique batch identifier with BATCH- prefix */
   batchId: string;
-  /** Array of created orders */
-  orders: Order[];
-  /** Summary statistics */
-  summary: {
-    totalOrders: number;
-    totalCost: number;
-    estimatedDeliveryWindow: string;
-  };
+  /** Current batch status */
+  status: 'PENDING' | 'CONFIRMED' | 'EXPORTED' | 'FULFILLED';
+  /** Total cost of all orders */
+  totalCost: number;
+  /** Number of orders in batch */
+  orderCount: number;
+  /** Selection polygon (JSON stringified GeoJSON) */
+  selectionPolygon?: string;
+  /** Delivery window start (ISO string) */
+  estimatedDeliveryStart: string;
+  /** Delivery window end (ISO string) */
+  estimatedDeliveryEnd: string;
+  /** Optional notes */
+  notes?: string;
 };
 ```
 
@@ -697,7 +772,7 @@ function generateOrderId(): string {
 
 **Functionality:**
 
-Generates downloadable delivery manifests in CSV format, suitable for integration with actual logistics systems. The manifest includes all order details, routing information, and delivery instructions.
+Generates downloadable delivery manifests in CSV format by reading order data from Convex. The manifest includes all order details, routing information, and delivery instructions. Since orders are persisted in Convex, exports can be generated at any time, even after browser sessions end.
 
 **Query Parameters:**
 
@@ -708,6 +783,67 @@ type ExportParams = {
   /** Export format */
   format: 'csv' | 'json';
 };
+```
+
+**Implementation (Server-Side Convex Query):**
+
+```typescript
+// app/api/orders/export/route.ts
+import { fetchQuery } from "convex/nextjs";
+import { api } from "@/convex/_generated/api";
+import { NextRequest, NextResponse } from "next/server";
+
+/**
+ * Exports order data from Convex as CSV or JSON.
+ * Reads persisted orders and formats for download.
+ */
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const batchId = searchParams.get("batchId");
+  const format = searchParams.get("format") ?? "csv";
+
+  if (!batchId) {
+    return NextResponse.json({ error: "batchId required" }, { status: 400 });
+  }
+
+  // Fetch orders from Convex
+  const orders = await fetchQuery(api.orders.getOrdersByBatchId, { batchId });
+
+  if (format === "json") {
+    return NextResponse.json({ orders });
+  }
+
+  // Generate CSV
+  const csv = generateOrdersCSV(orders);
+  return new NextResponse(csv, {
+    headers: {
+      "Content-Type": "text/csv",
+      "Content-Disposition": `attachment; filename="${batchId}-manifest.csv"`,
+    },
+  });
+}
+
+function generateOrdersCSV(orders: Order[]): string {
+  const header = "OrderID,Status,RecipientAddress,City,State,PostalCode,Latitude,Longitude,ProductName,ProductASIN,Price,EstimatedDelivery";
+  const rows = orders.map((order) => {
+    const addr = JSON.parse(order.shippingAddress);
+    return [
+      order.orderId,
+      order.status,
+      `"${addr.streetAddress}"`,
+      addr.city,
+      addr.state,
+      addr.postalCode,
+      addr.lat,
+      addr.lng,
+      `"${order.productName}"`,
+      order.productAsin,
+      order.productPrice.toFixed(2),
+      order.estimatedDeliveryEnd,
+    ].join(",");
+  });
+  return [header, ...rows].join("\n");
+}
 ```
 
 **CSV Schema:**
@@ -728,10 +864,27 @@ HOHOHO-ABC123,ORDER_CREATED,"123 Main St",San Francisco,CA,94102,37.7749,-122.41
 | `POST` | `/api/addresses/identify` | Identify addresses within polygon |
 | `POST` | `/api/gifts/pair` | AI-powered gift pairing |
 | `POST` | `/api/notifications/send` | Send delivery notification emails (AgentMail MCP) |
-| `POST` | `/api/orders/create` | Generate mock orders |
-| `GET` | `/api/orders/[batchId]` | Retrieve batch details |
-| `GET` | `/api/orders/export` | Export delivery manifest |
+| `GET` | `/api/orders/export` | Export delivery manifest (reads from Convex) |
 | `GET` | `/api/catalog` | Retrieve product catalog |
+
+### Convex Function Map
+
+Order creation and retrieval are handled directly through Convex functions for real-time reactivity:
+
+| Type | Function | Description |
+|------|----------|-------------|
+| `mutation` | `orderBatches.createBatch` | Create a new order batch |
+| `mutation` | `orderBatches.updateBatchStatus` | Update batch fulfillment status |
+| `query` | `orderBatches.listBatches` | List all batches (real-time) |
+| `query` | `orderBatches.getBatchByBatchId` | Get batch by ID |
+| `query` | `orderBatches.getBatchesByStatus` | Filter batches by status |
+| `mutation` | `orders.createOrder` | Create a single order |
+| `mutation` | `orders.createOrdersBatch` | Batch create multiple orders |
+| `mutation` | `orders.updateOrderStatus` | Update order fulfillment status |
+| `mutation` | `orders.updateOrderEmailStatus` | Mark email as sent |
+| `query` | `orders.listOrders` | List all orders (real-time) |
+| `query` | `orders.getOrderByOrderId` | Get order by ID |
+| `query` | `orders.getOrdersByBatchId` | Get orders in a batch |
 
 ### Error Handling
 
@@ -769,83 +922,728 @@ Standard error codes:
 
 ```
 <RootLayout>
-├── <Header>
-│   ├── <Logo />
-│   ├── <StatusIndicator /> (MCP connection status)
-│   └── <ThemeToggle />
-│
-├── <MainContent>
-│   ├── <GlobeMap>
-│   │   ├── <MapboxMap /> (react-map-gl)
-│   │   ├── <DrawControl /> (@mapbox/mapbox-gl-draw)
-│   │   ├── <SelectionOverlay />
-│   │   └── <DeliveryRouteLines /> (animated)
+├── <ConvexClientProvider>              // Convex context for real-time data
+│   ├── <Header>
+│   │   ├── <Logo />
+│   │   ├── <StatusIndicator /> (MCP + Convex connection status)
+│   │   ├── <OrderHistoryLink />        // Link to /orders page
+│   │   └── <ThemeToggle />
 │   │
-│   └── <ControlPanel>
-│       ├── <AreaSelectionControls>
-│       │   ├── <DrawButton />
-│       │   ├── <ClearButton />
-│       │   └── <PolygonInfo />
-│       │
-│       ├── <AddressList>
-│       │   ├── <AddressCard /> (repeated)
-│       │   └── <AddressCount />
-│       │
-│       ├── <GiftPairingSection>
-│       │   ├── <StrategySelector />
-│       │   ├── <PairGiftsButton />
-│       │   ├── <PairingProgress />
-│       │   └── <EmailNotificationPreview />
-│       │
-│       ├── <NotificationStatus>
-│       │   ├── <EmailSentCount />
-│       │   ├── <EmailFailedCount />
-│       │   └── <NotificationLog />
-│       │
-│       └── <OrderSummary>
-│           ├── <TotalCount />
-│           ├── <TotalCost />
-│           ├── <ConfirmOrderButton />
-│           └── <ExportManifestButton />
+│   ├── <MainContent>
+│   │   ├── <GlobeMap>
+│   │   │   ├── <MapboxMap /> (react-map-gl)
+│   │   │   ├── <DrawControl /> (@mapbox/mapbox-gl-draw)
+│   │   │   ├── <SelectionOverlay />
+│   │   │   └── <DeliveryRouteLines /> (animated)
+│   │   │
+│   │   └── <ControlPanel>
+│   │       ├── <AreaSelectionControls>
+│   │       │   ├── <DrawButton />
+│   │       │   ├── <ClearButton />
+│   │       │   └── <PolygonInfo />
+│   │       │
+│   │       ├── <AddressList>
+│   │       │   ├── <AddressCard /> (repeated)
+│   │       │   └── <AddressCount />
+│   │       │
+│   │       ├── <GiftPairingSection>
+│   │       │   ├── <StrategySelector />
+│   │       │   ├── <PairGiftsButton />
+│   │       │   ├── <PairingProgress />
+│   │       │   └── <EmailNotificationPreview />
+│   │       │
+│   │       ├── <NotificationStatus>
+│   │       │   ├── <EmailSentCount />
+│   │       │   ├── <EmailFailedCount />
+│   │       │   └── <NotificationLog />
+│   │       │
+│   │       ├── <OrderSummary>
+│   │       │   ├── <TotalCount />
+│   │       │   ├── <TotalCost />
+│   │       │   ├── <ConfirmOrderButton />  // useMutation to Convex
+│   │       │   └── <ExportManifestButton />
+│   │       │
+│   │       └── <RecentOrders>              // Real-time from Convex
+│   │           ├── <BatchCard /> (repeated, useQuery)
+│   │           └── <ViewAllLink />
+│   │
+│   └── <Footer>
+│       └── <HackathonBadge />
 │
-└── <Footer>
-    └── <HackathonBadge />
+├── <OrdersPage>                            // /orders route
+│   ├── <OrderHistoryClient>                // usePreloadedQuery for SSR
+│   │   ├── <BatchCard /> (repeated)
+│   │   │   ├── <BatchStatus />
+│   │   │   ├── <OrderCount />
+│   │   │   └── <TotalCost />
+│   │   └── <BatchDetails>
+│   │       ├── <OrderList>
+│   │       │   └── <OrderCard /> (repeated)
+│   │       └── <ExportBatchButton />
+│   └── <EmptyState />
 ```
 
 ---
 
-## Database Schema (In-Memory)
+## Database Schema (Convex)
 
-For the hackathon MVP, all data is stored in-memory using TypeScript Maps and Arrays. This eliminates database setup time while maintaining clean data access patterns.
+Order history and related data are persisted using [Convex](https://convex.dev), a real-time backend database that provides automatic synchronization, TypeScript-first schemas, and seamless Next.js integration. Convex eliminates the need for manual API layer construction while providing built-in reactivity for live UI updates.
+
+### Why Convex?
+
+1. **Real-time by Default:** Order status changes propagate instantly to all connected clients
+2. **TypeScript-first:** Schema validators generate type-safe queries and mutations
+3. **Zero Infrastructure:** Fully managed—no database provisioning or connection pooling
+4. **Next.js Integration:** First-class support for App Router, Server Components, and SSR
+5. **Hackathon Speed:** Setup takes minutes, not hours
+
+### Convex Schema Definition
+
+Create the schema in `convex/schema.ts`:
 
 ```typescript
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
+
 /**
- * In-memory data store for the hackathon MVP.
- * Uses Maps for O(1) lookup by ID and Arrays for ordered iteration.
+ * Convex schema definition for ICBG order persistence.
+ * Defines tables for order batches, individual orders, and address selections.
+ * All tables are automatically indexed by _id and _creationTime.
  */
-type DataStore = {
-  /** Order batches indexed by batch ID */
-  batches: Map<string, OrderBatch>;
-  /** Individual orders indexed by order ID */
-  orders: Map<string, Order>;
-  /** Address selections indexed by selection ID */
-  selections: Map<string, AddressSelection>;
-};
+export default defineSchema({
+  /**
+   * Order batches group multiple orders from a single area selection.
+   * Tracks batch-level status and aggregate cost information.
+   */
+  orderBatches: defineTable({
+    /** Unique batch identifier with BATCH- prefix */
+    batchId: v.string(),
+    /** Current batch status in the fulfillment pipeline */
+    status: v.union(
+      v.literal("PENDING"),
+      v.literal("CONFIRMED"),
+      v.literal("EXPORTED"),
+      v.literal("FULFILLED")
+    ),
+    /** Total cost of all orders in the batch (USD) */
+    totalCost: v.number(),
+    /** Number of orders in this batch */
+    orderCount: v.number(),
+    /** GeoJSON polygon representing the selected area (stored as JSON string) */
+    selectionPolygon: v.optional(v.string()),
+    /** Estimated delivery window start date (ISO string) */
+    estimatedDeliveryStart: v.string(),
+    /** Estimated delivery window end date (ISO string) */
+    estimatedDeliveryEnd: v.string(),
+    /** Optional notes or metadata for the batch */
+    notes: v.optional(v.string()),
+  })
+    .index("by_batchId", ["batchId"])
+    .index("by_status", ["status"]),
 
-type OrderBatch = {
-  id: string;
-  createdAt: Date;
-  orderIds: string[];
-  status: 'PENDING' | 'CONFIRMED' | 'EXPORTED';
-  totalCost: number;
-};
+  /**
+   * Individual orders represent a single gift delivery to one address.
+   * Contains full shipping, product, and cost information.
+   */
+  orders: defineTable({
+    /** Unique order identifier with HOHOHO- prefix */
+    orderId: v.string(),
+    /** Reference to parent batch */
+    batchId: v.string(),
+    /** Current order status in fulfillment pipeline */
+    status: v.union(
+      v.literal("ORDER_CREATED"),
+      v.literal("PENDING_FULFILLMENT"),
+      v.literal("SHIPPED"),
+      v.literal("DELIVERED")
+    ),
+    /** Full shipping address object (stored as JSON string for flexibility) */
+    shippingAddress: v.string(),
+    /** Product ASIN from the catalog */
+    productAsin: v.string(),
+    /** Product name at time of order (denormalized for history) */
+    productName: v.string(),
+    /** Product price at time of order (USD) */
+    productPrice: v.number(),
+    /** Shipping cost (USD, typically 0 for Santa's free delivery) */
+    shippingCost: v.number(),
+    /** Total order cost (product + shipping) */
+    totalCost: v.number(),
+    /** AI-generated reason for gift selection (optional) */
+    pairingReason: v.optional(v.string()),
+    /** Recipient email for notifications (optional) */
+    recipientEmail: v.optional(v.string()),
+    /** Whether email notification was sent successfully */
+    emailSent: v.optional(v.boolean()),
+    /** Estimated delivery start date (ISO string) */
+    estimatedDeliveryStart: v.string(),
+    /** Estimated delivery end date (ISO string) */
+    estimatedDeliveryEnd: v.string(),
+  })
+    .index("by_orderId", ["orderId"])
+    .index("by_batchId", ["batchId"])
+    .index("by_status", ["status"]),
 
-type AddressSelection = {
-  id: string;
-  polygon: GeoJSON.Polygon;
-  addressIds: string[];
-  createdAt: Date;
-};
+  /**
+   * Address selections track polygon selections made on the globe.
+   * Useful for analytics and re-running deliveries to the same area.
+   */
+  addressSelections: defineTable({
+    /** Unique selection identifier */
+    selectionId: v.string(),
+    /** GeoJSON polygon (stored as JSON string) */
+    polygon: v.string(),
+    /** Bounding box [minLng, minLat, maxLng, maxLat] as JSON string */
+    boundingBox: v.string(),
+    /** Number of addresses identified in this selection */
+    addressCount: v.number(),
+    /** Reference to batch created from this selection (optional) */
+    batchId: v.optional(v.string()),
+    /** Human-readable location description (e.g., "Castro District, SF") */
+    locationDescription: v.optional(v.string()),
+  })
+    .index("by_selectionId", ["selectionId"])
+    .index("by_batchId", ["batchId"]),
+});
+```
+
+### Convex Functions
+
+#### Order Batch Functions (`convex/orderBatches.ts`)
+
+```typescript
+import { mutation, query } from "./_generated/server";
+import { v } from "convex/values";
+
+/**
+ * Creates a new order batch from a completed area selection and gift pairing.
+ * Called when user confirms orders after gift pairing completes.
+ *
+ * @param batchId - Unique batch identifier (BATCH-XXXXXXXXXX format)
+ * @param totalCost - Aggregate cost of all orders in the batch
+ * @param orderCount - Number of individual orders in the batch
+ * @param selectionPolygon - GeoJSON polygon as JSON string (optional)
+ * @param estimatedDeliveryStart - ISO date string for delivery window start
+ * @param estimatedDeliveryEnd - ISO date string for delivery window end
+ * @returns The Convex document ID of the created batch
+ */
+export const createBatch = mutation({
+  args: {
+    batchId: v.string(),
+    totalCost: v.number(),
+    orderCount: v.number(),
+    selectionPolygon: v.optional(v.string()),
+    estimatedDeliveryStart: v.string(),
+    estimatedDeliveryEnd: v.string(),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const batchDocId = await ctx.db.insert("orderBatches", {
+      batchId: args.batchId,
+      status: "PENDING",
+      totalCost: args.totalCost,
+      orderCount: args.orderCount,
+      selectionPolygon: args.selectionPolygon,
+      estimatedDeliveryStart: args.estimatedDeliveryStart,
+      estimatedDeliveryEnd: args.estimatedDeliveryEnd,
+      notes: args.notes,
+    });
+    return batchDocId;
+  },
+});
+
+/**
+ * Retrieves a batch by its public batchId (BATCH-XXXXXXXXXX).
+ *
+ * @param batchId - The public batch identifier
+ * @returns The batch document or null if not found
+ */
+export const getBatchByBatchId = query({
+  args: { batchId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("orderBatches")
+      .withIndex("by_batchId", (q) => q.eq("batchId", args.batchId))
+      .unique();
+  },
+});
+
+/**
+ * Retrieves all batches, ordered by creation time (most recent first).
+ * Used for the order history dashboard.
+ *
+ * @returns Array of all batch documents
+ */
+export const listBatches = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("orderBatches").order("desc").collect();
+  },
+});
+
+/**
+ * Retrieves batches filtered by status.
+ * Useful for operational dashboards showing pending vs. fulfilled batches.
+ *
+ * @param status - Batch status to filter by
+ * @returns Array of batches matching the status
+ */
+export const getBatchesByStatus = query({
+  args: {
+    status: v.union(
+      v.literal("PENDING"),
+      v.literal("CONFIRMED"),
+      v.literal("EXPORTED"),
+      v.literal("FULFILLED")
+    ),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("orderBatches")
+      .withIndex("by_status", (q) => q.eq("status", args.status))
+      .order("desc")
+      .collect();
+  },
+});
+
+/**
+ * Updates a batch's status as it moves through the fulfillment pipeline.
+ *
+ * @param batchId - The public batch identifier
+ * @param status - New status to set
+ */
+export const updateBatchStatus = mutation({
+  args: {
+    batchId: v.string(),
+    status: v.union(
+      v.literal("PENDING"),
+      v.literal("CONFIRMED"),
+      v.literal("EXPORTED"),
+      v.literal("FULFILLED")
+    ),
+  },
+  handler: async (ctx, args) => {
+    const batch = await ctx.db
+      .query("orderBatches")
+      .withIndex("by_batchId", (q) => q.eq("batchId", args.batchId))
+      .unique();
+
+    if (!batch) {
+      throw new Error(`Batch not found: ${args.batchId}`);
+    }
+
+    await ctx.db.patch(batch._id, { status: args.status });
+  },
+});
+```
+
+#### Order Functions (`convex/orders.ts`)
+
+```typescript
+import { mutation, query } from "./_generated/server";
+import { v } from "convex/values";
+
+/**
+ * Creates a new individual order within a batch.
+ * Called for each address/product pairing when batch is confirmed.
+ *
+ * @param orderId - Unique order identifier (HOHOHO-XXXXXXXXXX format)
+ * @param batchId - Parent batch identifier
+ * @param shippingAddress - Full address object as JSON string
+ * @param productAsin - Product ASIN from catalog
+ * @param productName - Product name (denormalized)
+ * @param productPrice - Product price at order time
+ * @param pairingReason - AI-generated gift selection reason (optional)
+ * @param recipientEmail - Email for notifications (optional)
+ * @returns The Convex document ID of the created order
+ */
+export const createOrder = mutation({
+  args: {
+    orderId: v.string(),
+    batchId: v.string(),
+    shippingAddress: v.string(),
+    productAsin: v.string(),
+    productName: v.string(),
+    productPrice: v.number(),
+    shippingCost: v.number(),
+    pairingReason: v.optional(v.string()),
+    recipientEmail: v.optional(v.string()),
+    estimatedDeliveryStart: v.string(),
+    estimatedDeliveryEnd: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const orderDocId = await ctx.db.insert("orders", {
+      orderId: args.orderId,
+      batchId: args.batchId,
+      status: "ORDER_CREATED",
+      shippingAddress: args.shippingAddress,
+      productAsin: args.productAsin,
+      productName: args.productName,
+      productPrice: args.productPrice,
+      shippingCost: args.shippingCost,
+      totalCost: args.productPrice + args.shippingCost,
+      pairingReason: args.pairingReason,
+      recipientEmail: args.recipientEmail,
+      emailSent: false,
+      estimatedDeliveryStart: args.estimatedDeliveryStart,
+      estimatedDeliveryEnd: args.estimatedDeliveryEnd,
+    });
+    return orderDocId;
+  },
+});
+
+/**
+ * Creates multiple orders in a single transaction (batch insert).
+ * More efficient than individual createOrder calls for large batches.
+ *
+ * @param orders - Array of order objects to create
+ * @returns Array of created order document IDs
+ */
+export const createOrdersBatch = mutation({
+  args: {
+    orders: v.array(
+      v.object({
+        orderId: v.string(),
+        batchId: v.string(),
+        shippingAddress: v.string(),
+        productAsin: v.string(),
+        productName: v.string(),
+        productPrice: v.number(),
+        shippingCost: v.number(),
+        pairingReason: v.optional(v.string()),
+        recipientEmail: v.optional(v.string()),
+        estimatedDeliveryStart: v.string(),
+        estimatedDeliveryEnd: v.string(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const orderDocIds: string[] = [];
+
+    for (const order of args.orders) {
+      const docId = await ctx.db.insert("orders", {
+        orderId: order.orderId,
+        batchId: order.batchId,
+        status: "ORDER_CREATED",
+        shippingAddress: order.shippingAddress,
+        productAsin: order.productAsin,
+        productName: order.productName,
+        productPrice: order.productPrice,
+        shippingCost: order.shippingCost,
+        totalCost: order.productPrice + order.shippingCost,
+        pairingReason: order.pairingReason,
+        recipientEmail: order.recipientEmail,
+        emailSent: false,
+        estimatedDeliveryStart: order.estimatedDeliveryStart,
+        estimatedDeliveryEnd: order.estimatedDeliveryEnd,
+      });
+      orderDocIds.push(docId);
+    }
+
+    return orderDocIds;
+  },
+});
+
+/**
+ * Retrieves an order by its public orderId (HOHOHO-XXXXXXXXXX).
+ *
+ * @param orderId - The public order identifier
+ * @returns The order document or null if not found
+ */
+export const getOrderByOrderId = query({
+  args: { orderId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("orders")
+      .withIndex("by_orderId", (q) => q.eq("orderId", args.orderId))
+      .unique();
+  },
+});
+
+/**
+ * Retrieves all orders belonging to a specific batch.
+ * Used for batch detail views and CSV export.
+ *
+ * @param batchId - The parent batch identifier
+ * @returns Array of orders in the batch
+ */
+export const getOrdersByBatchId = query({
+  args: { batchId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("orders")
+      .withIndex("by_batchId", (q) => q.eq("batchId", args.batchId))
+      .collect();
+  },
+});
+
+/**
+ * Retrieves all orders, ordered by creation time (most recent first).
+ * Used for the complete order history view.
+ *
+ * @returns Array of all order documents
+ */
+export const listOrders = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("orders").order("desc").collect();
+  },
+});
+
+/**
+ * Updates an order's status as it moves through fulfillment.
+ *
+ * @param orderId - The public order identifier
+ * @param status - New status to set
+ */
+export const updateOrderStatus = mutation({
+  args: {
+    orderId: v.string(),
+    status: v.union(
+      v.literal("ORDER_CREATED"),
+      v.literal("PENDING_FULFILLMENT"),
+      v.literal("SHIPPED"),
+      v.literal("DELIVERED")
+    ),
+  },
+  handler: async (ctx, args) => {
+    const order = await ctx.db
+      .query("orders")
+      .withIndex("by_orderId", (q) => q.eq("orderId", args.orderId))
+      .unique();
+
+    if (!order) {
+      throw new Error(`Order not found: ${args.orderId}`);
+    }
+
+    await ctx.db.patch(order._id, { status: args.status });
+  },
+});
+
+/**
+ * Marks an order as having sent email notification.
+ *
+ * @param orderId - The public order identifier
+ * @param emailSent - Whether email was sent successfully
+ */
+export const updateOrderEmailStatus = mutation({
+  args: {
+    orderId: v.string(),
+    emailSent: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const order = await ctx.db
+      .query("orders")
+      .withIndex("by_orderId", (q) => q.eq("orderId", args.orderId))
+      .unique();
+
+    if (!order) {
+      throw new Error(`Order not found: ${args.orderId}`);
+    }
+
+    await ctx.db.patch(order._id, { emailSent: args.emailSent });
+  },
+});
+```
+
+### Frontend Integration
+
+#### Convex Client Provider (`app/ConvexClientProvider.tsx`)
+
+```typescript
+"use client";
+
+import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { ReactNode } from "react";
+
+/**
+ * Convex client instance for the ICBG application.
+ * Connects to the Convex deployment specified by NEXT_PUBLIC_CONVEX_URL.
+ */
+const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
+/**
+ * Provider component that wraps the application with Convex context.
+ * Must wrap any components that use Convex hooks (useQuery, useMutation).
+ *
+ * @param children - Child components to render within the provider
+ * @returns JSX element with Convex context provider
+ */
+export function ConvexClientProvider({ children }: { children: ReactNode }) {
+  return <ConvexProvider client={convex}>{children}</ConvexProvider>;
+}
+```
+
+#### Using Convex in Components
+
+```typescript
+"use client";
+
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+
+/**
+ * Order History Dashboard component demonstrating Convex integration.
+ * Displays all order batches with real-time updates.
+ */
+export function OrderHistory() {
+  // Real-time query - automatically updates when data changes
+  const batches = useQuery(api.orderBatches.listBatches);
+
+  if (batches === undefined) {
+    return <div className="animate-pulse">Loading order history...</div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold">Order History</h2>
+      {batches.length === 0 ? (
+        <p className="text-gray-500">No orders yet. Select an area to begin!</p>
+      ) : (
+        <ul className="space-y-2">
+          {batches.map((batch) => (
+            <li
+              key={batch._id}
+              className="p-4 border rounded-lg hover:bg-gray-50"
+            >
+              <div className="flex justify-between items-center">
+                <span className="font-mono text-sm">{batch.batchId}</span>
+                <span
+                  className={`px-2 py-1 rounded text-xs ${
+                    batch.status === "FULFILLED"
+                      ? "bg-green-100 text-green-800"
+                      : batch.status === "CONFIRMED"
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-yellow-100 text-yellow-800"
+                  }`}
+                >
+                  {batch.status}
+                </span>
+              </div>
+              <div className="mt-2 text-sm text-gray-600">
+                {batch.orderCount} orders · ${batch.totalCost.toFixed(2)} total
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Component demonstrating order creation with Convex mutation.
+ * Called when user confirms gift pairings.
+ */
+export function ConfirmOrdersButton({
+  pairings,
+  addresses,
+  onSuccess,
+}: {
+  pairings: GiftPairing[];
+  addresses: Address[];
+  onSuccess: (batchId: string) => void;
+}) {
+  const createBatch = useMutation(api.orderBatches.createBatch);
+  const createOrdersBatch = useMutation(api.orders.createOrdersBatch);
+
+  const handleConfirm = async () => {
+    const batchId = `BATCH-${nanoid(10).toUpperCase()}`;
+    const totalCost = pairings.reduce((sum, p) => sum + p.product.price, 0);
+
+    // Create the batch first
+    await createBatch({
+      batchId,
+      totalCost,
+      orderCount: pairings.length,
+      estimatedDeliveryStart: "2025-12-23",
+      estimatedDeliveryEnd: "2025-12-24",
+    });
+
+    // Create all orders in batch
+    const orders = pairings.map((pairing) => {
+      const address = addresses.find((a) => a.id === pairing.addressId)!;
+      return {
+        orderId: `HOHOHO-${nanoid(10).toUpperCase()}`,
+        batchId,
+        shippingAddress: JSON.stringify(address),
+        productAsin: pairing.product.asin,
+        productName: pairing.product.name,
+        productPrice: pairing.product.price,
+        shippingCost: 0,
+        pairingReason: pairing.pairingReason,
+        estimatedDeliveryStart: "2025-12-23",
+        estimatedDeliveryEnd: "2025-12-24",
+      };
+    });
+
+    await createOrdersBatch({ orders });
+    onSuccess(batchId);
+  };
+
+  return (
+    <button
+      onClick={handleConfirm}
+      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+    >
+      🎅 Confirm {pairings.length} Orders
+    </button>
+  );
+}
+```
+
+#### Server-Side Data Preloading
+
+For server-rendered pages with Convex data, use `preloadQuery`:
+
+```typescript
+// app/orders/page.tsx
+import { preloadQuery } from "convex/nextjs";
+import { api } from "@/convex/_generated/api";
+import { OrderHistoryClient } from "./OrderHistoryClient";
+
+/**
+ * Server Component that preloads order batch data for SSR.
+ * Data is hydrated on the client and remains reactive.
+ */
+export default async function OrdersPage() {
+  const preloadedBatches = await preloadQuery(api.orderBatches.listBatches);
+
+  return (
+    <div className="container mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Santa's Delivery History</h1>
+      <OrderHistoryClient preloadedBatches={preloadedBatches} />
+    </div>
+  );
+}
+```
+
+```typescript
+// app/orders/OrderHistoryClient.tsx
+"use client";
+
+import { Preloaded, usePreloadedQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+
+/**
+ * Client Component that consumes preloaded batch data.
+ * Maintains real-time reactivity after initial SSR hydration.
+ */
+export function OrderHistoryClient({
+  preloadedBatches,
+}: {
+  preloadedBatches: Preloaded<typeof api.orderBatches.listBatches>;
+}) {
+  const batches = usePreloadedQuery(preloadedBatches);
+
+  return (
+    <div className="grid gap-4">
+      {batches.map((batch) => (
+        <BatchCard key={batch._id} batch={batch} />
+      ))}
+    </div>
+  );
+}
 ```
 
 ---
@@ -857,6 +1655,10 @@ type AddressSelection = {
 ```bash
 # Mapbox Configuration
 NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=pk.xxxx    # Mapbox public token for client-side maps
+
+# Convex Configuration
+NEXT_PUBLIC_CONVEX_URL=https://xxx.convex.cloud  # Convex deployment URL (from `npx convex dev`)
+CONVEX_DEPLOY_KEY=prod:xxx                       # Convex deploy key (for production deployments)
 
 # Dedalus Labs Configuration
 DEDALUS_API_KEY=sk-xxxx                     # Dedalus API key for MCP server access
@@ -871,7 +1673,12 @@ NODE_ENV=development                         # Environment mode
 1. Create a `.env.local` file in the project root
 2. Copy the template above and fill in your credentials
 3. Obtain a Mapbox token from [mapbox.com/account/access-tokens](https://account.mapbox.com/access-tokens/)
-4. Obtain a Dedalus API key from [dedaluslabs.ai/dashboard](https://dedaluslabs.ai/dashboard)
+4. Initialize Convex and obtain deployment URL:
+   ```bash
+   npx convex dev
+   ```
+   This command will prompt you to log in with GitHub, create a project, and automatically save your `NEXT_PUBLIC_CONVEX_URL` to `.env.local`.
+5. Obtain a Dedalus API key from [dedaluslabs.ai/dashboard](https://dedaluslabs.ai/dashboard)
 
 ---
 
@@ -881,23 +1688,32 @@ NODE_ENV=development                         # Environment mode
 
 **Objectives:**
 
-This first hour establishes the foundation. The team must resist feature creep and commit to the defined scope. The deliverable by end of hour is a running Next.js application with Mapbox displaying and Dedalus SDK initialized.
+This first hour establishes the foundation. The team must resist feature creep and commit to the defined scope. The deliverable by end of hour is a running Next.js application with Mapbox displaying, Convex database connected, and Dedalus SDK initialized.
 
 **Tasks:**
 
 1. Initialize Next.js 16 project with TypeScript and Tailwind CSS
 2. Install all dependencies (see package.json below)
-3. Configure environment variables
-4. Verify Mapbox token works with a basic map render
-5. Verify Dedalus SDK connects with a simple test query
-6. Create folder structure and placeholder components
+3. Initialize Convex and create database schema:
+   ```bash
+   npx convex dev
+   ```
+   This will create the `convex/` folder and save your deployment URL to `.env.local`
+4. Create Convex schema (`convex/schema.ts`) with orderBatches, orders, and addressSelections tables
+5. Set up `ConvexClientProvider` and wrap the app layout
+6. Configure remaining environment variables (Mapbox, Dedalus)
+7. Verify Mapbox token works with a basic map render
+8. Verify Dedalus SDK connects with a simple test query
+9. Create folder structure and placeholder components
 
 **Verification Checklist:**
 
-- [ ] `npm run dev` starts without errors
+- [ ] `npm run dev` starts both Next.js and Convex dev servers without errors
+- [ ] Convex dashboard shows connected deployment at [dashboard.convex.dev](https://dashboard.convex.dev)
 - [ ] Map renders at localhost:3000
 - [ ] Console shows "Dedalus connected" message
 - [ ] TypeScript compiles without errors
+- [ ] Convex schema compiles and tables appear in dashboard
 
 ### Hour 1–2: Globe/Map Interface (5:45 PM – 6:45 PM)
 
@@ -972,26 +1788,29 @@ Implement the core MCP integration using Dedalus Labs SDK with the AgentMail MCP
 - [ ] Different households get different recommendations
 - [ ] Email send status displayed in UI
 
-### Hour 4–5: Order Generation (8:45 PM – 9:45 PM)
+### Hour 4–5: Order Generation with Convex Persistence (8:45 PM – 9:45 PM)
 
 **Objectives:**
 
-Create the order generation system with mock Amazon integration. By end of hour, users can confirm orders and see a complete order summary.
+Create the order generation system with Convex persistence. By end of hour, users can confirm orders, see a complete order summary, and view order history from the database.
 
 **Tasks:**
 
-1. Implement order ID generation
-2. Create `/api/orders/create` endpoint
-3. Build order summary component
+1. Implement Convex mutations for batch and order creation (`convex/orderBatches.ts`, `convex/orders.ts`)
+2. Create order ID generation with HOHOHO prefix
+3. Build order summary component using `useMutation` hook
 4. Calculate totals and estimated delivery
-5. Add "Confirm Area Order" button
-6. Implement CSV export functionality
+5. Add "Confirm Area Order" button that persists to Convex
+6. Build order history dashboard using `useQuery` hook for real-time updates
+7. Implement CSV export functionality that reads from Convex
 
 **Verification Checklist:**
 
-- [ ] Orders generate with HOHOHO prefix
+- [ ] Orders generate with HOHOHO prefix and persist to Convex
+- [ ] Convex dashboard shows orders in the `orders` table
 - [ ] Summary shows total count and cost
-- [ ] CSV downloads successfully
+- [ ] Order history updates in real-time without page refresh
+- [ ] CSV downloads successfully from persisted data
 - [ ] Order status displays correctly
 
 ### Hour 5–6: Demo Polish (9:45 PM – 10:00 PM + Buffer)
@@ -1027,16 +1846,20 @@ Add visual polish and prepare for the 3-minute demo. Focus on animations and the
   "description": "Intercontinental ballistic gift dispatch platform for Santa's logistics operations",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "npm-run-all --parallel dev:next dev:convex",
+    "dev:next": "next dev",
+    "dev:convex": "convex dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "convex:deploy": "convex deploy"
   },
   "dependencies": {
     "next": "16.0.10",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "convex": "^1.17.0",
     "dedalus-labs": "0.1.0-alpha.4",
     "mapbox-gl": "3.17.0",
     "react-map-gl": "8.1.0",
@@ -1056,7 +1879,8 @@ Add visual polish and prepare for the 3-minute demo. Focus on animations and the
     "tailwindcss": "^4.0.0",
     "postcss": "^8.4.49",
     "eslint": "^9.16.0",
-    "eslint-config-next": "16.0.10"
+    "eslint-config-next": "16.0.10",
+    "npm-run-all": "^4.1.5"
   },
   "engines": {
     "node": ">=22.0.0"
@@ -1275,11 +2099,11 @@ function fallbackGiftPairing(address: Address): Product {
 
 3. **AI Gift Pairing + Email Notifications (40 sec):** "Now the magic happens. Using the AgentMail MCP server from the Dedalus Labs Marketplace, our AI analyzes each household—inferring demographics from building types—and recommends appropriate gifts. When gifts are assigned, recipients automatically receive festive email notifications saying 'Santa's delivering your present!' Watch as families get matched with toys while seniors receive cozy home goods." *[Trigger pairing, show progress, display email notification preview]*
 
-4. **Order Generation (30 sec):** "With one click, I generate 47 orders totaling $1,847. Each order has a unique ID, real shipping address, and estimated delivery window. I can export this as a delivery manifest for our fulfillment team." *[Click confirm, show summary, download CSV]*
+4. **Order Generation + Persistence (30 sec):** "With one click, I generate 47 orders totaling $1,847—all persisted to our Convex database in real-time. Each order has a unique ID, real shipping address, and estimated delivery window. Watch the order history dashboard update instantly without refreshing. I can export this as a delivery manifest for our fulfillment team, or review past batches anytime." *[Click confirm, show summary updating in real-time, show order history, download CSV]*
 
 ### Closing (30 seconds)
 
-"What you've seen is fully functional with real data. The area selection works globally with live OpenStreetMap data—over 10 billion geographic features worldwide. Product pairing and email notifications are powered by the AgentMail MCP server from the Dedalus Labs Marketplace—recipients actually receive festive delivery announcements. The Amazon integration is mocked for demo speed, but the interface mirrors the actual fulfillment flow. ICBG—making Santa's operations as smooth as a sleigh on fresh snow."
+"What you've seen is fully functional with real data. The area selection works globally with live OpenStreetMap data—over 10 billion geographic features worldwide. Product pairing and email notifications are powered by the AgentMail MCP server from the Dedalus Labs Marketplace—recipients actually receive festive delivery announcements. All orders are persisted to a Convex database with real-time synchronization—refresh the page and your order history remains intact. The Amazon integration is mocked for demo speed, but the interface mirrors the actual fulfillment flow. ICBG—making Santa's operations as smooth as a sleigh on fresh snow."
 
 ---
 
@@ -1292,12 +2116,14 @@ function fallbackGiftPairing(address: Address): Product {
 3. **Automation:** Address ingestion happens automatically through Overpass API geospatial queries
 4. **MCP Integration:** Email notifications via the AgentMail MCP server from the Dedalus Labs Marketplace demonstrate real, production-ready MCP integration
 5. **User Engagement:** Recipients receive actual festive "Santa's delivering your present!" email notifications
-6. **Production-Path:** Amazon ordering is pluggable—the mock system mirrors real API patterns
+6. **Persistent Storage:** Order history is stored in Convex with real-time sync—data survives page refreshes and is queryable
+7. **Production-Path:** Amazon ordering is pluggable—the mock system mirrors real API patterns
 
 **Explicit disclaimers to include:**
 
 - "Address data comes from OpenStreetMap—the world's largest open geographic database with over 10 billion features."
 - "Email notifications are sent via the AgentMail MCP server hosted on the Dedalus Labs Marketplace—recipients receive real emails."
+- "Order history is persisted to Convex, a real-time backend database—refresh the page and all orders remain."
 - "The Amazon integration is mocked for hackathon speed; the interface mirrors the real fulfillment flow and could be connected to actual APIs."
 
 ---
@@ -1310,6 +2136,10 @@ icbg/
 │   ├── layout.tsx              # Root layout with providers
 │   ├── page.tsx                # Main application page
 │   ├── globals.css             # Global styles including Tailwind
+│   ├── ConvexClientProvider.tsx # Convex provider for client components
+│   ├── orders/
+│   │   ├── page.tsx            # Order history page (Server Component)
+│   │   └── OrderHistoryClient.tsx # Order history (Client Component)
 │   └── api/
 │       ├── addresses/
 │       │   └── identify/
@@ -1321,14 +2151,21 @@ icbg/
 │       │   └── send/
 │       │       └── route.ts    # Email notification endpoint (AgentMail MCP)
 │       ├── orders/
-│       │   ├── create/
-│       │   │   └── route.ts    # Order creation endpoint
-│       │   ├── [batchId]/
-│       │   │   └── route.ts    # Batch retrieval endpoint
 │       │   └── export/
-│       │       └── route.ts    # CSV export endpoint
+│       │       └── route.ts    # CSV export endpoint (reads from Convex)
 │       └── catalog/
 │           └── route.ts        # Product catalog endpoint
+│
+├── convex/
+│   ├── _generated/             # Auto-generated Convex types and API
+│   │   ├── api.d.ts            # Type-safe API references
+│   │   ├── api.js              # API runtime
+│   │   ├── dataModel.d.ts      # Database type definitions
+│   │   └── server.d.ts         # Server function types
+│   ├── schema.ts               # Database schema definition
+│   ├── orderBatches.ts         # Batch queries and mutations
+│   ├── orders.ts               # Order queries and mutations
+│   └── addressSelections.ts    # Selection queries and mutations
 │
 ├── components/
 │   ├── GlobeMap/
@@ -1344,6 +2181,11 @@ icbg/
 │   │   ├── GiftPairing.tsx     # Pairing controls
 │   │   ├── NotificationStatus.tsx # Email notification status
 │   │   └── OrderSummary.tsx    # Order summary display
+│   │
+│   ├── OrderHistory/
+│   │   ├── index.tsx           # Order history dashboard
+│   │   ├── BatchCard.tsx       # Individual batch display
+│   │   └── OrderDetails.tsx    # Order detail view
 │   │
 │   └── ui/
 │       ├── Button.tsx          # Styled button component
@@ -1365,6 +2207,7 @@ icbg/
 ├── .env.local                  # Environment variables (git-ignored)
 ├── .env.example                # Environment template
 ├── next.config.ts              # Next.js configuration
+├── convex.json                 # Convex project configuration
 ├── tailwind.config.ts          # Tailwind configuration
 ├── tsconfig.json               # TypeScript configuration
 ├── package.json                # Dependencies and scripts
@@ -1387,7 +2230,9 @@ icbg/
 | AgentMail MCP unavailable | Low | Medium | Skip email notifications, proceed with gift pairing only |
 | Email delivery failures | Low | Low | Log failures, display partial success in UI, allow retry |
 | Browser WebGL issues | Low | Medium | Test in Chrome, have Firefox backup |
-| State management complexity | Medium | Medium | Keep state flat, use React Query |
+| State management complexity | Medium | Medium | Keep state flat, use Convex for persistence and React Query for API state |
+| Convex connection issues | Low | Medium | Convex has built-in retry logic; show connection status indicator in UI |
+| Convex schema migration | Low | Low | Schema is defined upfront; use `npx convex dev` to sync changes automatically |
 
 ### Time Risks
 
@@ -1414,9 +2259,10 @@ icbg/
 2. ✓ Selecting area returns list of real addresses (OpenStreetMap Overpass API)
 3. ✓ Gift pairing uses Dedalus MCP integration (hackathon requirement)
 4. ✓ Email notifications sent via AgentMail MCP server from Dedalus Marketplace
-5. ✓ Orders generate with unique IDs and summary
-6. ✓ Export functionality produces valid CSV
-7. ✓ OSM attribution displayed per license requirements
+5. ✓ Orders generate with unique IDs and persist to Convex database
+6. ✓ Order history dashboard displays real-time data from Convex
+7. ✓ Export functionality produces valid CSV from persisted data
+8. ✓ OSM attribution displayed per license requirements
 
 ### Enhanced Features (Nice to Have)
 
@@ -1424,8 +2270,9 @@ icbg/
 2. ○ Real-time order counter animation
 3. ○ Festive UI theme with snow effects
 4. ○ Multiple area selection support
-5. ○ Order status state machine
-6. ○ Email delivery status tracking in UI
+5. ○ Order status state machine with Convex mutations
+6. ○ Email delivery status tracking in UI (synced to Convex)
+7. ○ Server-rendered order history page with SSR preloading
 
 ### Demo Quality (Must Have)
 
@@ -1546,7 +2393,153 @@ Address data is sourced in real-time from the OpenStreetMap Overpass API. Below 
 
 ---
 
-## Appendix B: Dedalus Labs SDK Reference
+## Appendix B: Convex Database Integration Reference
+
+### Overview
+
+[Convex](https://convex.dev) is a real-time backend platform that combines a document database with serverless functions. For ICBG, Convex provides:
+
+- **Persistent Order Storage:** All orders and batches are durably stored and queryable
+- **Real-time Reactivity:** UI updates automatically when data changes—no polling required
+- **Type Safety:** Schema validators generate TypeScript types for compile-time safety
+- **Zero Configuration:** No database setup, connection strings, or infrastructure management
+
+### Installation
+
+```bash
+npm install convex
+npx convex dev  # Creates project and starts sync
+```
+
+### Schema Validators Reference
+
+Convex uses the `v` validator library for defining schemas:
+
+```typescript
+import { v } from "convex/values";
+
+// Primitive validators
+v.string()                    // String values
+v.number()                    // Numeric values (integers and floats)
+v.boolean()                   // true or false
+v.null()                      // Literal null
+
+// Complex validators
+v.array(v.string())           // Array of strings
+v.object({ key: v.string() }) // Object with typed properties
+v.optional(v.string())        // String or undefined
+
+// Union validators (enum-like)
+v.union(
+  v.literal("PENDING"),
+  v.literal("CONFIRMED"),
+  v.literal("FULFILLED")
+)
+
+// ID references
+v.id("orders")                // Reference to document in "orders" table
+```
+
+### Query and Mutation Patterns
+
+**Queries** are read-only functions that can be subscribed to for real-time updates:
+
+```typescript
+import { query } from "./_generated/server";
+import { v } from "convex/values";
+
+export const getBatch = query({
+  args: { batchId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("orderBatches")
+      .withIndex("by_batchId", (q) => q.eq("batchId", args.batchId))
+      .unique();
+  },
+});
+```
+
+**Mutations** modify data and trigger reactive updates to subscribed queries:
+
+```typescript
+import { mutation } from "./_generated/server";
+import { v } from "convex/values";
+
+export const updateStatus = mutation({
+  args: { batchId: v.string(), status: v.string() },
+  handler: async (ctx, args) => {
+    const batch = await ctx.db
+      .query("orderBatches")
+      .withIndex("by_batchId", (q) => q.eq("batchId", args.batchId))
+      .unique();
+    
+    if (batch) {
+      await ctx.db.patch(batch._id, { status: args.status });
+    }
+  },
+});
+```
+
+### React Hooks
+
+```typescript
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+
+// Subscribe to real-time data
+const batches = useQuery(api.orderBatches.listBatches);
+
+// Call mutations
+const createBatch = useMutation(api.orderBatches.createBatch);
+await createBatch({ batchId: "BATCH-123", totalCost: 499.99, ... });
+```
+
+### Server-Side Rendering with Next.js
+
+For SSR with App Router, use `preloadQuery` in Server Components:
+
+```typescript
+// Server Component
+import { preloadQuery } from "convex/nextjs";
+import { api } from "@/convex/_generated/api";
+
+export default async function Page() {
+  const preloaded = await preloadQuery(api.orderBatches.listBatches);
+  return <ClientComponent preloaded={preloaded} />;
+}
+```
+
+```typescript
+// Client Component
+"use client";
+import { usePreloadedQuery } from "convex/react";
+
+export function ClientComponent({ preloaded }) {
+  const batches = usePreloadedQuery(preloaded);
+  // Data is hydrated and remains reactive
+}
+```
+
+### Dashboard Access
+
+View and manage data at [dashboard.convex.dev](https://dashboard.convex.dev):
+
+- Browse tables and documents
+- Run ad-hoc queries
+- View function logs
+- Monitor deployment health
+
+### Documentation Links
+
+- [Convex Next.js Quickstart](https://docs.convex.dev/quickstart/nextjs)
+- [App Router Integration](https://docs.convex.dev/client/nextjs/app-router/)
+- [Server Rendering](https://docs.convex.dev/client/nextjs/app-router/server-rendering)
+- [Schema Definition](https://docs.convex.dev/database/schemas)
+- [Queries and Mutations](https://docs.convex.dev/functions)
+
+---
+
+## Appendix C: Dedalus Labs SDK Reference
 
 ### Installation
 
@@ -1623,7 +2616,7 @@ For this hackathon, `openai/gpt-4o-mini` provides the best balance of speed and 
 
 ---
 
-## Appendix C: OpenStreetMap Overpass API Reference
+## Appendix D: OpenStreetMap Overpass API Reference
 
 ### Overview
 
