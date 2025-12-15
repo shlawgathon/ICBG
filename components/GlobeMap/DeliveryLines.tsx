@@ -1,0 +1,166 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Source, Layer } from "react-map-gl";
+import * as turf from "@turf/turf";
+import { NORTH_POLE, deliveryLineConfig } from "@/lib/mapbox";
+import type { Address } from "@/lib/types";
+
+/**
+ * Props for the DeliveryLines component.
+ */
+type DeliveryLinesProps = {
+  /** Addresses to draw delivery lines to */
+  addresses: Address[];
+};
+
+/**
+ * DeliveryLines renders animated arc lines from the North Pole
+ * to each delivery address, creating a festive visual effect.
+ *
+ * Features:
+ * - Great circle arcs for realistic globe paths
+ * - Staggered animation with sequential reveal
+ * - Festive red color scheme
+ *
+ * @param addresses - Delivery destination addresses
+ * @returns Source and Layer components for delivery routes
+ */
+export function DeliveryLines({ addresses }: DeliveryLinesProps) {
+  const [animationProgress, setAnimationProgress] = useState(0);
+  const [geojsonData, setGeojsonData] = useState<GeoJSON.FeatureCollection>({
+    type: "FeatureCollection",
+    features: [],
+  });
+
+  // Generate great circle lines to each address
+  useEffect(() => {
+    if (addresses.length === 0) {
+      setGeojsonData({ type: "FeatureCollection", features: [] });
+      return;
+    }
+
+    const features: GeoJSON.Feature[] = addresses.map((address, index) => {
+      // Create great circle line from North Pole to address
+      const start = turf.point([NORTH_POLE.longitude, NORTH_POLE.latitude]);
+      const end = turf.point([address.lng, address.lat]);
+      const line = turf.greatCircle(start, end, {
+        npoints: 100,
+      });
+
+      return {
+        ...line,
+        properties: {
+          addressId: address.id,
+          index,
+        },
+      };
+    });
+
+    setGeojsonData({
+      type: "FeatureCollection",
+      features,
+    });
+  }, [addresses]);
+
+  // Animate the line drawing
+  useEffect(() => {
+    if (addresses.length === 0) {
+      setAnimationProgress(0);
+      return;
+    }
+
+    let animationFrame: number;
+    let startTime: number;
+    const duration = 2000; // 2 seconds for full animation
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      setAnimationProgress(progress);
+
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      }
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, [addresses]);
+
+  if (addresses.length === 0 || geojsonData.features.length === 0) {
+    return null;
+  }
+
+  return (
+    <Source id="delivery-lines" type="geojson" data={geojsonData}>
+      {/* Main delivery line */}
+      <Layer
+        id="delivery-line-layer"
+        type="line"
+        paint={{
+          "line-color": deliveryLineConfig.color,
+          "line-width": deliveryLineConfig.width,
+          "line-opacity": 0.8,
+          "line-dasharray": [2, 1],
+        }}
+        layout={{
+          "line-cap": "round",
+          "line-join": "round",
+        }}
+      />
+
+      {/* Animated glow effect */}
+      <Layer
+        id="delivery-line-glow"
+        type="line"
+        paint={{
+          "line-color": "#ffd700",
+          "line-width": 4,
+          "line-opacity": 0.3 * animationProgress,
+          "line-blur": 3,
+        }}
+        layout={{
+          "line-cap": "round",
+          "line-join": "round",
+        }}
+      />
+
+      {/* Animated highlight traveling along the line */}
+      <Layer
+        id="delivery-line-highlight"
+        type="line"
+        paint={{
+          "line-color": "#ffffff",
+          "line-width": 2,
+          "line-opacity": 0.6,
+          "line-gradient": [
+            "interpolate",
+            ["linear"],
+            ["line-progress"],
+            0,
+            "transparent",
+            animationProgress * 0.8,
+            "transparent",
+            animationProgress * 0.9,
+            "#ffd700",
+            animationProgress,
+            "#ffffff",
+          ],
+        }}
+        layout={{
+          "line-cap": "round",
+          "line-join": "round",
+        }}
+      />
+    </Source>
+  );
+}
+

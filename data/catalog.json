@@ -1,0 +1,163 @@
+[
+  {
+    "asin": "B0X001",
+    "name": "LEGO Holiday Train Set",
+    "description": "Build and display this festive train with 4 decorated cars, engine, and holiday-themed accessories. Perfect for ages 8+.",
+    "price": 49.99,
+    "category": "toys",
+    "ageRange": "children"
+  },
+  {
+    "asin": "B0X002",
+    "name": "Illustrated Christmas Stories",
+    "description": "Beautiful collection of classic holiday tales with stunning illustrations.",
+    "price": 19.99,
+    "category": "books",
+    "ageRange": "children"
+  },
+  {
+    "asin": "B0X003",
+    "name": "Smart Home Display 10\"",
+    "description": "Control your smart home, video call family, and display photos.",
+    "price": 129.99,
+    "category": "electronics",
+    "ageRange": "adult"
+  },
+  {
+    "asin": "B0X004",
+    "name": "Cozy Holiday Throw Blanket",
+    "description": "Soft fleece blanket with festive snowflake patterns. 60x80 inches.",
+    "price": 34.99,
+    "category": "home",
+    "ageRange": "all"
+  },
+  {
+    "asin": "B0X005",
+    "name": "Wireless Earbuds Pro",
+    "description": "Premium wireless earbuds with noise cancellation and 24-hour battery.",
+    "price": 89.99,
+    "category": "electronics",
+    "ageRange": "teen"
+  },
+  {
+    "asin": "B0X006",
+    "name": "Remote Control Race Car",
+    "description": "High-speed RC car with LED lights and rechargeable battery.",
+    "price": 39.99,
+    "category": "toys",
+    "ageRange": "children"
+  },
+  {
+    "asin": "B0X007",
+    "name": "Cashmere Winter Scarf",
+    "description": "Luxurious cashmere scarf in classic holiday red.",
+    "price": 79.99,
+    "category": "clothing",
+    "ageRange": "adult"
+  },
+  {
+    "asin": "B0X008",
+    "name": "Board Game Collection",
+    "description": "Family game night set with 10 classic games.",
+    "price": 44.99,
+    "category": "toys",
+    "ageRange": "all"
+  },
+  {
+    "asin": "B0X009",
+    "name": "Aromatherapy Diffuser Set",
+    "description": "Essential oil diffuser with 6 holiday-scented oils.",
+    "price": 54.99,
+    "category": "home",
+    "ageRange": "adult"
+  },
+  {
+    "asin": "B0X010",
+    "name": "Teen Fiction Box Set",
+    "description": "Bestselling YA series complete collection (5 books).",
+    "price": 59.99,
+    "category": "books",
+    "ageRange": "teen"
+  },
+  {
+    "asin": "B0X011",
+    "name": "Robotic Building Kit",
+    "description": "STEM robotics kit with 500+ pieces and programming app.",
+    "price": 99.99,
+    "category": "toys",
+    "ageRange": "teen"
+  },
+  {
+    "asin": "B0X012",
+    "name": "Luxury Candle Set",
+    "description": "Set of 3 premium soy candles in winter scents.",
+    "price": 45.99,
+    "category": "home",
+    "ageRange": "adult"
+  },
+  {
+    "asin": "B0X013",
+    "name": "Kids Smartwatch",
+    "description": "GPS-enabled smartwatch with games and parental controls.",
+    "price": 69.99,
+    "category": "electronics",
+    "ageRange": "children"
+  },
+  {
+    "asin": "B0X014",
+    "name": "Cookbook: Holiday Feasts",
+    "description": "150+ recipes for festive meals and treats.",
+    "price": 29.99,
+    "category": "books",
+    "ageRange": "adult"
+  },
+  {
+    "asin": "B0X015",
+    "name": "Cozy Pajama Set",
+    "description": "Fleece pajama set with holiday prints. Various sizes.",
+    "price": 39.99,
+    "category": "clothing",
+    "ageRange": "all"
+  },
+  {
+    "asin": "B0X016",
+    "name": "Portable Bluetooth Speaker",
+    "description": "Waterproof speaker with 20-hour battery life.",
+    "price": 59.99,
+    "category": "electronics",
+    "ageRange": "teen"
+  },
+  {
+    "asin": "B0X017",
+    "name": "Art Supply Set",
+    "description": "Complete art kit with paints, brushes, canvas, and easel.",
+    "price": 49.99,
+    "category": "toys",
+    "ageRange": "children"
+  },
+  {
+    "asin": "B0X018",
+    "name": "Memory Foam Slippers",
+    "description": "Ultra-comfortable indoor slippers with memory foam soles.",
+    "price": 29.99,
+    "category": "clothing",
+    "ageRange": "senior"
+  },
+  {
+    "asin": "B0X019",
+    "name": "Large Print Crossword Book",
+    "description": "200 crossword puzzles in easy-to-read large print.",
+    "price": 14.99,
+    "category": "books",
+    "ageRange": "senior"
+  },
+  {
+    "asin": "B0X020",
+    "name": "Electric Heated Blanket",
+    "description": "Plush heated throw with 10 heat settings and auto-off.",
+    "price": 69.99,
+    "category": "home",
+    "ageRange": "senior"
+  }
+]
+
