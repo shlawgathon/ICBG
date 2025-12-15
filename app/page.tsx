@@ -35,7 +35,7 @@ const DEMO_EMAIL_CONFIGS = [
   },
   {
     /** Email address to receive demo notifications */
-    email: "jerry.x093@gmail.com",
+    email: "jerry.x0930@gmail.com",
     /** Display name for the demo recipient */
     name: "Jerry Xiao",
     /** Demo address shown in the notification email */
