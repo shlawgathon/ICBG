@@ -64,14 +64,10 @@ export function AddressList({ addresses, isLoading }: AddressListProps) {
           <>
             <div className="space-y-2">
               {addresses.map((address) => (
-                <div
-                  key={address.id}
-                  className="p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
-                >
+                <div key={address.id} className="p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
                   <p className="font-medium text-sm leading-tight">{address.streetAddress || "Unknown Address"}</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {[address.city, address.state, address.postalCode].filter(Boolean).join(", ") ||
-                      "Location pending"}
+                    {[address.city, address.state, address.postalCode].filter(Boolean).join(", ") || "Location pending"}
                   </p>
 
                   {/* Household metadata badges */}
@@ -86,10 +82,7 @@ export function AddressList({ addresses, isLoading }: AddressListProps) {
                         </Badge>
                       )}
                       {address.metadata.hasChildren && (
-                        <Badge
-                          variant="outline"
-                          className="text-xs gap-1 py-0 border-accent/50 text-accent-foreground"
-                        >
+                        <Badge variant="outline" className="text-xs gap-1 py-0 border-accent/50 text-accent-foreground">
                           <Baby className="w-3 h-3" />
                           Children
                         </Badge>
