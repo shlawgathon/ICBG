@@ -9,7 +9,9 @@
     "dev:convex": "convex dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "type-check": "tsc --noEmit",
     "convex:deploy": "convex deploy"
   },
@@ -50,6 +52,7 @@
     "@types/react-dom": "^19.0.1",
     "eslint": "^9.16.0",
     "eslint-config-next": "16.0.10",
+    "eslint-config-prettier": "^10.1.8",
     "npm-run-all": "^4.1.5",
     "postcss": "^8.4.49",
     "tailwindcss": "^4.0.0",
