@@ -249,6 +249,20 @@ export default function HomePage() {
   }, [addresses, strategy]);
 
   /**
+   * Sanitizes a postal code for use in a synthetic email address.
+   * Removes whitespace and special characters that would make the email invalid.
+   *
+   * @param postalCode - Raw postal code string (may contain spaces, e.g., "SW1A 1AA")
+   * @returns Sanitized postal code safe for email domain use (e.g., "SW1A1AA")
+   */
+  const sanitizePostalCodeForEmail = (postalCode: string | undefined): string => {
+    if (!postalCode) return "unknown";
+    // Remove whitespace and special characters, keeping only alphanumeric and hyphens
+    const sanitized = postalCode.replace(/[^a-zA-Z0-9-]/g, "");
+    return sanitized || "unknown";
+  };
+
+  /**
    * Sends delivery notification emails.
    * Always includes the demo email recipient (if configured) for demonstration purposes.
    */
@@ -261,8 +275,10 @@ export default function HomePage() {
       // Build recipients from pairings (synthetic emails for identified addresses)
       const syntheticRecipients = pairings.map((pairing) => {
         const address = addresses.find((a) => a.id === pairing.addressId);
+        // Sanitize postal code to create valid email addresses (removes spaces/special chars)
+        const sanitizedPostalCode = sanitizePostalCodeForEmail(address?.postalCode);
         return {
-          email: `resident@${address?.postalCode || "unknown"}.example.com`,
+          email: `resident@${sanitizedPostalCode}.example.com`,
           name: "Valued Resident",
           address: address?.streetAddress || "Unknown Address"
         };
@@ -283,7 +299,10 @@ export default function HomePage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to send notifications");
+        // Parse error response for better debugging
+        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+        console.error("Notification API error:", errorData);
+        throw new Error(errorData.message || `Failed to send notifications (${response.status})`);
       }
 
       const data = await response.json();
