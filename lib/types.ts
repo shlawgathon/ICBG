@@ -84,11 +84,7 @@ export type GiftPairing = {
  * Order status state machine values.
  * Tracks an order through the fulfillment pipeline.
  */
-export type OrderStatus =
-  | "ORDER_CREATED"
-  | "PENDING_FULFILLMENT"
-  | "SHIPPED"
-  | "DELIVERED";
+export type OrderStatus = "ORDER_CREATED" | "PENDING_FULFILLMENT" | "SHIPPED" | "DELIVERED";
 
 /**
  * Batch status state machine values.
@@ -231,4 +227,3 @@ export type OverpassResponse = {
   /** Array of OSM elements */
   elements: OverpassElement[];
 };
-

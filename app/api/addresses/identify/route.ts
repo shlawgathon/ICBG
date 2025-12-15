@@ -1,16 +1,7 @@
 import { NextResponse } from "next/server";
 import * as turf from "@turf/turf";
-import type { Polygon } from "geojson";
-import {
-  identifyAddressesInPolygon,
-  isValidPolygon,
-  calculatePolygonArea,
-} from "@/lib/overpass";
-import type {
-  AddressIdentifyRequest,
-  AddressIdentifyResponse,
-  APIError,
-} from "@/lib/types";
+import { identifyAddressesInPolygon, isValidPolygon, calculatePolygonArea } from "@/lib/overpass";
+import type { AddressIdentifyRequest, AddressIdentifyResponse, APIError } from "@/lib/types";
 
 /** Maximum number of addresses to return per request */
 const MAX_ADDRESSES = 50;
@@ -36,7 +27,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (!polygon || !isValidPolygon(polygon)) {
       const error: APIError = {
         code: "INVALID_POLYGON",
-        message: "Request must contain a valid GeoJSON polygon",
+        message: "Request must contain a valid GeoJSON polygon"
       };
       return NextResponse.json(error, { status: 400 });
     }
@@ -46,7 +37,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (area > MAX_AREA_KM2) {
       const error: APIError = {
         code: "AREA_TOO_LARGE",
-        message: `Selection area (${area.toFixed(2)} km²) exceeds maximum of ${MAX_AREA_KM2} km²`,
+        message: `Selection area (${area.toFixed(2)} km²) exceeds maximum of ${MAX_AREA_KM2} km²`
       };
       return NextResponse.json(error, { status: 400 });
     }
@@ -64,7 +55,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       addresses,
       count: addresses.length,
       boundingBox: bbox,
-      attribution: "© OpenStreetMap contributors",
+      attribution: "© OpenStreetMap contributors"
     };
 
     return NextResponse.json(response);
@@ -74,12 +65,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     const apiError: APIError = {
       code: "INTERNAL_ERROR",
       message: "Failed to identify addresses in the selected area",
-      details:
-        process.env.NODE_ENV === "development"
-          ? { error: String(error) }
-          : undefined,
+      details: process.env.NODE_ENV === "development" ? { error: String(error) } : undefined
     };
     return NextResponse.json(apiError, { status: 500 });
   }
 }
-

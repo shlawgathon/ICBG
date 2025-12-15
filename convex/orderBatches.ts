@@ -22,7 +22,7 @@ export const createBatch = mutation({
     selectionPolygon: v.optional(v.string()),
     estimatedDeliveryStart: v.string(),
     estimatedDeliveryEnd: v.string(),
-    notes: v.optional(v.string()),
+    notes: v.optional(v.string())
   },
   handler: async (ctx, args) => {
     const batchDocId = await ctx.db.insert("orderBatches", {
@@ -33,10 +33,10 @@ export const createBatch = mutation({
       selectionPolygon: args.selectionPolygon,
       estimatedDeliveryStart: args.estimatedDeliveryStart,
       estimatedDeliveryEnd: args.estimatedDeliveryEnd,
-      notes: args.notes,
+      notes: args.notes
     });
     return batchDocId;
-  },
+  }
 });
 
 /**
@@ -52,7 +52,7 @@ export const getBatchByBatchId = query({
       .query("orderBatches")
       .withIndex("by_batchId", (q) => q.eq("batchId", args.batchId))
       .unique();
-  },
+  }
 });
 
 /**
@@ -65,7 +65,7 @@ export const listBatches = query({
   args: {},
   handler: async (ctx) => {
     return await ctx.db.query("orderBatches").order("desc").collect();
-  },
+  }
 });
 
 /**
@@ -77,12 +77,7 @@ export const listBatches = query({
  */
 export const getBatchesByStatus = query({
   args: {
-    status: v.union(
-      v.literal("PENDING"),
-      v.literal("CONFIRMED"),
-      v.literal("EXPORTED"),
-      v.literal("FULFILLED")
-    ),
+    status: v.union(v.literal("PENDING"), v.literal("CONFIRMED"), v.literal("EXPORTED"), v.literal("FULFILLED"))
   },
   handler: async (ctx, args) => {
     return await ctx.db
@@ -90,7 +85,7 @@ export const getBatchesByStatus = query({
       .withIndex("by_status", (q) => q.eq("status", args.status))
       .order("desc")
       .collect();
-  },
+  }
 });
 
 /**
@@ -103,12 +98,7 @@ export const getBatchesByStatus = query({
 export const updateBatchStatus = mutation({
   args: {
     batchId: v.string(),
-    status: v.union(
-      v.literal("PENDING"),
-      v.literal("CONFIRMED"),
-      v.literal("EXPORTED"),
-      v.literal("FULFILLED")
-    ),
+    status: v.union(v.literal("PENDING"), v.literal("CONFIRMED"), v.literal("EXPORTED"), v.literal("FULFILLED"))
   },
   handler: async (ctx, args) => {
     const batch = await ctx.db
@@ -121,7 +111,7 @@ export const updateBatchStatus = mutation({
     }
 
     await ctx.db.patch(batch._id, { status: args.status });
-  },
+  }
 });
 
 /**
@@ -155,6 +145,5 @@ export const deleteBatch = mutation({
 
     // Delete the batch itself
     await ctx.db.delete(batch._id);
-  },
+  }
 });
-

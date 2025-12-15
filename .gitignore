@@ -29,6 +29,7 @@ yarn-error.log*
 # env files (may contain sensitive credentials)
 .env
 .env*.local
+!.env.example
 
 # vercel
 .vercel

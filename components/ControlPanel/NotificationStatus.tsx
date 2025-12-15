@@ -32,12 +32,7 @@ type NotificationStatusProps = {
  * @param disabled - Whether controls are disabled
  * @returns Notification status card component
  */
-export function NotificationStatus({
-  results,
-  isSending,
-  onSend,
-  disabled = false,
-}: NotificationStatusProps) {
+export function NotificationStatus({ results, isSending, onSend, disabled = false }: NotificationStatusProps) {
   const total = results ? results.sent + results.failed : 0;
   const successRate = total > 0 ? (results!.sent / total) * 100 : 0;
 
@@ -51,12 +46,7 @@ export function NotificationStatus({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Send button */}
-        <Button
-          onClick={onSend}
-          disabled={disabled || isSending}
-          variant="outline"
-          className="w-full"
-        >
+        <Button onClick={onSend} disabled={disabled || isSending} variant="outline" className="w-full">
           {isSending ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -74,9 +64,7 @@ export function NotificationStatus({
         {isSending && (
           <div className="space-y-2">
             <Progress value={50} className="h-2" />
-            <p className="text-xs text-center text-muted-foreground">
-              Sending emails via AgentMail...
-            </p>
+            <p className="text-xs text-center text-muted-foreground">Sending emails via AgentMail...</p>
           </div>
         )}
 
@@ -119,4 +107,3 @@ export function NotificationStatus({
     </Card>
   );
 }
-

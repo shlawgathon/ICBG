@@ -2,13 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Gift, Sparkles, Shuffle, Package, Check } from "lucide-react";
 
@@ -50,7 +44,7 @@ export function GiftPairing({
   isPairing,
   progress,
   pairingsCount,
-  disabled = false,
+  disabled = false
 }: GiftPairingProps) {
   return (
     <Card className="border-accent/30">
@@ -64,11 +58,7 @@ export function GiftPairing({
         {/* Strategy selector */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Strategy</label>
-          <Select
-            value={strategy}
-            onValueChange={onStrategyChange}
-            disabled={isPairing}
-          >
+          <Select value={strategy} onValueChange={onStrategyChange} disabled={isPairing}>
             <SelectTrigger>
               <SelectValue placeholder="Select strategy" />
             </SelectTrigger>
@@ -124,9 +114,7 @@ export function GiftPairing({
         {isPairing && (
           <div className="space-y-2">
             <Progress value={progress} className="h-2" />
-            <p className="text-xs text-center text-muted-foreground">
-              Analyzing households with AI...
-            </p>
+            <p className="text-xs text-center text-muted-foreground">Analyzing households with AI...</p>
           </div>
         )}
 
@@ -141,4 +129,3 @@ export function GiftPairing({
     </Card>
   );
 }
-

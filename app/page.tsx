@@ -29,9 +29,7 @@ export default function HomePage() {
   // Drawing state
   const [isDrawing, setIsDrawing] = useState(false);
   const [polygon, setPolygon] = useState<Polygon | undefined>();
-  const [polygonInfo, setPolygonInfo] = useState<
-    { area: number; vertexCount: number } | undefined
-  >();
+  const [polygonInfo, setPolygonInfo] = useState<{ area: number; vertexCount: number } | undefined>();
 
   // Address state
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -44,9 +42,7 @@ export default function HomePage() {
   const [pairingProgress, setPairingProgress] = useState(0);
 
   // Notification state
-  const [notificationResults, setNotificationResults] = useState<
-    { sent: number; failed: number } | undefined
-  >();
+  const [notificationResults, setNotificationResults] = useState<{ sent: number; failed: number } | undefined>();
   const [isSendingNotifications, setIsSendingNotifications] = useState(false);
 
   // Order state
@@ -66,11 +62,11 @@ export default function HomePage() {
     end.setDate(end.getDate() + 10); // 10 days from now
     return `${start.toLocaleDateString("en-US", {
       month: "short",
-      day: "numeric",
+      day: "numeric"
     })} - ${end.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
-      year: "numeric",
+      year: "numeric"
     })}`;
   };
 
@@ -104,7 +100,7 @@ export default function HomePage() {
       const response = await fetch("/api/addresses/identify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ polygon: newPolygon, limit: 50 }),
+        body: JSON.stringify({ polygon: newPolygon, limit: 50 })
       });
 
       if (!response.ok) {
@@ -152,7 +148,7 @@ export default function HomePage() {
       const response = await fetch("/api/gifts/pair", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ addresses, strategy }),
+        body: JSON.stringify({ addresses, strategy })
       });
 
       clearInterval(progressInterval);
@@ -186,14 +182,14 @@ export default function HomePage() {
         return {
           email: `resident@${address?.postalCode || "unknown"}.example.com`,
           name: "Valued Resident",
-          address: address?.streetAddress || "Unknown Address",
+          address: address?.streetAddress || "Unknown Address"
         };
       });
 
       const response = await fetch("/api/notifications/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipients, estimatedDelivery: getEstimatedDelivery() }),
+        body: JSON.stringify({ recipients, estimatedDelivery: getEstimatedDelivery() })
       });
 
       if (!response.ok) {
@@ -206,7 +202,7 @@ export default function HomePage() {
       console.error("Notification send error:", error);
       setNotificationResults({
         sent: 0,
-        failed: pairings.length,
+        failed: pairings.length
       });
     } finally {
       setIsSendingNotifications(false);
@@ -237,7 +233,7 @@ export default function HomePage() {
         orderCount: pairings.length,
         selectionPolygon: polygon ? JSON.stringify(polygon) : undefined,
         estimatedDeliveryStart: deliveryStart.toISOString(),
-        estimatedDeliveryEnd: deliveryEnd.toISOString(),
+        estimatedDeliveryEnd: deliveryEnd.toISOString()
       });
 
       // Create orders
@@ -253,7 +249,7 @@ export default function HomePage() {
           shippingCost: 0, // Santa's free delivery!
           pairingReason: pairing.pairingReason,
           estimatedDeliveryStart: deliveryStart.toISOString(),
-          estimatedDeliveryEnd: deliveryEnd.toISOString(),
+          estimatedDeliveryEnd: deliveryEnd.toISOString()
         };
       });
 

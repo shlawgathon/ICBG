@@ -33,12 +33,7 @@ type AreaSelectionProps = {
  * @param polygonInfo - Current polygon statistics
  * @returns Area selection card component
  */
-export function AreaSelection({
-  isDrawing,
-  onStartDraw,
-  onClearSelection,
-  polygonInfo,
-}: AreaSelectionProps) {
+export function AreaSelection({ isDrawing, onStartDraw, onClearSelection, polygonInfo }: AreaSelectionProps) {
   return (
     <Card className="border-primary/30">
       <CardHeader className="pb-3">
@@ -50,11 +45,7 @@ export function AreaSelection({
       <CardContent className="space-y-4">
         {/* Draw/Clear buttons */}
         <div className="flex gap-2">
-          <Button
-            onClick={onStartDraw}
-            variant={isDrawing ? "secondary" : "default"}
-            className="flex-1"
-          >
+          <Button onClick={onStartDraw} variant={isDrawing ? "secondary" : "default"} className="flex-1">
             {isDrawing ? (
               <>
                 <Pencil className="w-4 h-4 mr-2 animate-pulse" />
@@ -83,9 +74,7 @@ export function AreaSelection({
           <div className="bg-muted/50 rounded-lg p-3 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Area</span>
-              <span className="font-medium">
-                {polygonInfo.area.toFixed(3)} km²
-              </span>
+              <span className="font-medium">{polygonInfo.area.toFixed(3)} km²</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Vertices</span>
@@ -94,11 +83,10 @@ export function AreaSelection({
           </div>
         ) : (
           <p className="text-sm text-muted-foreground text-center py-2">
-            Click "Select Area" then draw a polygon on the map
+            Click &quot;Select Area&quot; then draw a polygon on the map
           </p>
         )}
       </CardContent>
     </Card>
   );
 }
-

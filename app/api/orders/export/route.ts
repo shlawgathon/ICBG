@@ -24,7 +24,7 @@ const CSV_HEADERS = [
   "Email Sent",
   "Est. Delivery Start",
   "Est. Delivery End",
-  "Created At",
+  "Created At"
 ];
 
 /**
@@ -79,7 +79,7 @@ function generateOrdersCSV(
       streetAddress: "",
       city: "",
       state: "",
-      postalCode: "",
+      postalCode: ""
     };
     try {
       address = JSON.parse(order.shippingAddress);
@@ -106,7 +106,7 @@ function generateOrdersCSV(
       escapeCSV(order.emailSent),
       escapeCSV(order.estimatedDeliveryStart),
       escapeCSV(order.estimatedDeliveryEnd),
-      escapeCSV(new Date(order._creationTime).toISOString()),
+      escapeCSV(new Date(order._creationTime).toISOString())
     ];
 
     rows.push(row.join(","));
@@ -147,9 +147,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     if (!orders || orders.length === 0) {
       const error: APIError = {
         code: "NO_ORDERS",
-        message: batchId
-          ? `No orders found for batch: ${batchId}`
-          : "No orders found",
+        message: batchId ? `No orders found for batch: ${batchId}` : "No orders found"
       };
       return NextResponse.json(error, { status: 404 });
     }
@@ -158,21 +156,19 @@ export async function GET(request: Request): Promise<NextResponse> {
       return NextResponse.json({
         orders,
         count: orders.length,
-        exportedAt: new Date().toISOString(),
+        exportedAt: new Date().toISOString()
       });
     }
 
     // Default to CSV export
     const csv = generateOrdersCSV(orders);
-    const filename = batchId
-      ? `orders-${batchId}-${Date.now()}.csv`
-      : `all-orders-${Date.now()}.csv`;
+    const filename = batchId ? `orders-${batchId}-${Date.now()}.csv` : `all-orders-${Date.now()}.csv`;
 
     return new NextResponse(csv, {
       headers: {
         "Content-Type": "text/csv",
-        "Content-Disposition": `attachment; filename="${filename}"`,
-      },
+        "Content-Disposition": `attachment; filename="${filename}"`
+      }
     });
   } catch (error) {
     console.error("Export error:", error);
@@ -180,12 +176,8 @@ export async function GET(request: Request): Promise<NextResponse> {
     const apiError: APIError = {
       code: "INTERNAL_ERROR",
       message: "Failed to export orders",
-      details:
-        process.env.NODE_ENV === "development"
-          ? { error: String(error) }
-          : undefined,
+      details: process.env.NODE_ENV === "development" ? { error: String(error) } : undefined
     };
     return NextResponse.json(apiError, { status: 500 });
   }
 }
-

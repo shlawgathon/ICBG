@@ -1,17 +1,6 @@
 import { NextResponse } from "next/server";
-import {
-  pairGiftsWithAI,
-  fallbackGiftPairing,
-  getAllProducts,
-  mockCatalog,
-} from "@/lib/dedalus";
-import type {
-  GiftPairRequest,
-  GiftPairResponse,
-  GiftPairing,
-  Product,
-  APIError,
-} from "@/lib/types";
+import { pairGiftsWithAI, fallbackGiftPairing, getAllProducts, mockCatalog } from "@/lib/dedalus";
+import type { GiftPairRequest, GiftPairResponse, GiftPairing, Product, APIError } from "@/lib/types";
 
 /** Maximum addresses per request */
 const MAX_ADDRESSES = 50;
@@ -23,14 +12,12 @@ const MAX_ADDRESSES = 50;
  * @param addresses - Array of addresses to pair
  * @returns Array of gift pairings
  */
-function roundRobinPairing(
-  addresses: GiftPairRequest["addresses"]
-): GiftPairing[] {
+function roundRobinPairing(addresses: GiftPairRequest["addresses"]): GiftPairing[] {
   const products = getAllProducts();
   return addresses.map((address, index) => ({
     addressId: address.id,
     product: products[index % products.length],
-    pairingReason: "Assigned via round-robin distribution",
+    pairingReason: "Assigned via round-robin distribution"
   }));
 }
 
@@ -41,16 +28,11 @@ function roundRobinPairing(
  * @param category - Optional category to filter product selection
  * @returns Array of gift pairings
  */
-function singleProductPairing(
-  addresses: GiftPairRequest["addresses"],
-  category?: string
-): GiftPairing[] {
+function singleProductPairing(addresses: GiftPairRequest["addresses"], category?: string): GiftPairing[] {
   let product: Product;
 
   if (category) {
-    const categoryProducts = mockCatalog.filter(
-      (p) => p.category === category
-    );
+    const categoryProducts = mockCatalog.filter((p) => p.category === category);
     product = categoryProducts.length > 0 ? categoryProducts[0] : mockCatalog[0];
   } else {
     // Default to a universally appropriate gift (books)
@@ -60,7 +42,7 @@ function singleProductPairing(
   return addresses.map((address) => ({
     addressId: address.id,
     product,
-    pairingReason: `Standard gift selection${category ? ` (${category})` : ""}`,
+    pairingReason: `Standard gift selection${category ? ` (${category})` : ""}`
   }));
 }
 
@@ -88,7 +70,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (!addresses || !Array.isArray(addresses) || addresses.length === 0) {
       const error: APIError = {
         code: "INVALID_ADDRESSES",
-        message: "Request must contain a non-empty array of addresses",
+        message: "Request must contain a non-empty array of addresses"
       };
       return NextResponse.json(error, { status: 400 });
     }
@@ -97,7 +79,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (addresses.length > MAX_ADDRESSES) {
       const error: APIError = {
         code: "TOO_MANY_ADDRESSES",
-        message: `Maximum ${MAX_ADDRESSES} addresses per request`,
+        message: `Maximum ${MAX_ADDRESSES} addresses per request`
       };
       return NextResponse.json(error, { status: 400 });
     }
@@ -123,14 +105,12 @@ export async function POST(request: Request): Promise<NextResponse> {
           // If AI returns fewer pairings than addresses, use fallback for remainder
           if (pairings.length < addresses.length) {
             const pairedIds = new Set(pairings.map((p) => p.addressId));
-            const unpairedAddresses = addresses.filter(
-              (a) => !pairedIds.has(a.id)
-            );
+            const unpairedAddresses = addresses.filter((a) => !pairedIds.has(a.id));
 
             const fallbackPairings = unpairedAddresses.map((address) => ({
               addressId: address.id,
               product: fallbackGiftPairing(address),
-              pairingReason: "Assigned via rule-based fallback",
+              pairingReason: "Assigned via rule-based fallback"
             }));
 
             pairings = [...pairings, ...fallbackPairings];
@@ -143,7 +123,7 @@ export async function POST(request: Request): Promise<NextResponse> {
           pairings = addresses.map((address) => ({
             addressId: address.id,
             product: fallbackGiftPairing(address),
-            pairingReason: "Assigned via rule-based logic (AI unavailable)",
+            pairingReason: "Assigned via rule-based logic (AI unavailable)"
           }));
           strategyUsed = "rule-based-fallback";
         }
@@ -151,15 +131,12 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     // Calculate total cost
-    const totalCost = pairings.reduce(
-      (sum, pairing) => sum + pairing.product.price,
-      0
-    );
+    const totalCost = pairings.reduce((sum, pairing) => sum + pairing.product.price, 0);
 
     const response: GiftPairResponse = {
       pairings,
       totalCost,
-      strategyUsed,
+      strategyUsed
     };
 
     return NextResponse.json(response);
@@ -169,12 +146,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     const apiError: APIError = {
       code: "INTERNAL_ERROR",
       message: "Failed to pair gifts with addresses",
-      details:
-        process.env.NODE_ENV === "development"
-          ? { error: String(error) }
-          : undefined,
+      details: process.env.NODE_ENV === "development" ? { error: String(error) } : undefined
     };
     return NextResponse.json(apiError, { status: 500 });
   }
 }
-

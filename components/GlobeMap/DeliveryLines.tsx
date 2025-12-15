@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { Source, Layer } from "react-map-gl";
 import * as turf from "@turf/turf";
 import { NORTH_POLE, deliveryLineConfig } from "@/lib/mapbox";
@@ -28,16 +28,15 @@ type DeliveryLinesProps = {
  */
 export function DeliveryLines({ addresses }: DeliveryLinesProps) {
   const [animationProgress, setAnimationProgress] = useState(0);
-  const [geojsonData, setGeojsonData] = useState<GeoJSON.FeatureCollection>({
-    type: "FeatureCollection",
-    features: [],
-  });
+  const prevAddressLengthRef = useRef(addresses.length);
 
-  // Generate great circle lines to each address
-  useEffect(() => {
+  /**
+   * Compute GeoJSON data from addresses.
+   * Uses useMemo instead of useEffect + setState to avoid cascading renders.
+   */
+  const geojsonData = useMemo<GeoJSON.FeatureCollection>(() => {
     if (addresses.length === 0) {
-      setGeojsonData({ type: "FeatureCollection", features: [] });
-      return;
+      return { type: "FeatureCollection", features: [] };
     }
 
     const features: GeoJSON.Feature[] = addresses.map((address, index) => {
@@ -45,37 +44,52 @@ export function DeliveryLines({ addresses }: DeliveryLinesProps) {
       const start = turf.point([NORTH_POLE.longitude, NORTH_POLE.latitude]);
       const end = turf.point([address.lng, address.lat]);
       const line = turf.greatCircle(start, end, {
-        npoints: 100,
+        npoints: 100
       });
 
       return {
         ...line,
         properties: {
           addressId: address.id,
-          index,
-        },
+          index
+        }
       };
     });
 
-    setGeojsonData({
+    return {
       type: "FeatureCollection",
-      features,
-    });
+      features
+    };
   }, [addresses]);
 
-  // Animate the line drawing
+  // Animate the line drawing using requestAnimationFrame callback pattern
   useEffect(() => {
+    // Reset animation progress synchronously when addresses change to empty
     if (addresses.length === 0) {
-      setAnimationProgress(0);
+      // Only update if we had addresses before (prevents unnecessary updates)
+      if (prevAddressLengthRef.current > 0) {
+        prevAddressLengthRef.current = 0;
+      }
       return;
     }
 
+    // Track that we now have addresses
+    prevAddressLengthRef.current = addresses.length;
+
     let animationFrame: number;
-    let startTime: number;
+    let startTime: number | undefined;
     const duration = 2000; // 2 seconds for full animation
+    let isFirstFrame = true;
 
     const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
+      // Reset progress on first frame of new animation (inside RAF callback)
+      if (isFirstFrame) {
+        isFirstFrame = false;
+        setAnimationProgress(0);
+        startTime = timestamp;
+      }
+
+      if (startTime === undefined) startTime = timestamp;
       const elapsed = timestamp - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
@@ -109,11 +123,11 @@ export function DeliveryLines({ addresses }: DeliveryLinesProps) {
           "line-color": deliveryLineConfig.color,
           "line-width": deliveryLineConfig.width,
           "line-opacity": 0.8,
-          "line-dasharray": [2, 1],
+          "line-dasharray": [2, 1]
         }}
         layout={{
           "line-cap": "round",
-          "line-join": "round",
+          "line-join": "round"
         }}
       />
 
@@ -125,11 +139,11 @@ export function DeliveryLines({ addresses }: DeliveryLinesProps) {
           "line-color": "#ffd700",
           "line-width": 4,
           "line-opacity": 0.3 * animationProgress,
-          "line-blur": 3,
+          "line-blur": 3
         }}
         layout={{
           "line-cap": "round",
-          "line-join": "round",
+          "line-join": "round"
         }}
       />
 
@@ -152,15 +166,14 @@ export function DeliveryLines({ addresses }: DeliveryLinesProps) {
             animationProgress * 0.9,
             "#ffd700",
             animationProgress,
-            "#ffffff",
-          ],
+            "#ffffff"
+          ]
         }}
         layout={{
           "line-cap": "round",
-          "line-join": "round",
+          "line-join": "round"
         }}
       />
     </Source>
   );
 }
-

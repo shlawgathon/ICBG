@@ -18,7 +18,7 @@ export const createSelection = mutation({
     polygon: v.string(),
     boundingBox: v.string(),
     addressCount: v.number(),
-    locationDescription: v.optional(v.string()),
+    locationDescription: v.optional(v.string())
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("addressSelections", {
@@ -26,9 +26,9 @@ export const createSelection = mutation({
       polygon: args.polygon,
       boundingBox: args.boundingBox,
       addressCount: args.addressCount,
-      locationDescription: args.locationDescription,
+      locationDescription: args.locationDescription
     });
-  },
+  }
 });
 
 /**
@@ -42,7 +42,7 @@ export const createSelection = mutation({
 export const linkSelectionToBatch = mutation({
   args: {
     selectionId: v.string(),
-    batchId: v.string(),
+    batchId: v.string()
   },
   handler: async (ctx, args) => {
     const selection = await ctx.db
@@ -55,7 +55,7 @@ export const linkSelectionToBatch = mutation({
     }
 
     await ctx.db.patch(selection._id, { batchId: args.batchId });
-  },
+  }
 });
 
 /**
@@ -71,7 +71,7 @@ export const getSelectionBySelectionId = query({
       .query("addressSelections")
       .withIndex("by_selectionId", (q) => q.eq("selectionId", args.selectionId))
       .unique();
-  },
+  }
 });
 
 /**
@@ -87,7 +87,7 @@ export const getSelectionByBatchId = query({
       .query("addressSelections")
       .withIndex("by_batchId", (q) => q.eq("batchId", args.batchId))
       .unique();
-  },
+  }
 });
 
 /**
@@ -99,7 +99,7 @@ export const listSelections = query({
   args: {},
   handler: async (ctx) => {
     return await ctx.db.query("addressSelections").order("desc").collect();
-  },
+  }
 });
 
 /**
@@ -113,7 +113,7 @@ export const listSelections = query({
 export const updateSelectionAddressCount = mutation({
   args: {
     selectionId: v.string(),
-    addressCount: v.number(),
+    addressCount: v.number()
   },
   handler: async (ctx, args) => {
     const selection = await ctx.db
@@ -126,7 +126,7 @@ export const updateSelectionAddressCount = mutation({
     }
 
     await ctx.db.patch(selection._id, { addressCount: args.addressCount });
-  },
+  }
 });
 
 /**
@@ -148,6 +148,5 @@ export const deleteSelection = mutation({
     }
 
     await ctx.db.delete(selection._id);
-  },
+  }
 });
-

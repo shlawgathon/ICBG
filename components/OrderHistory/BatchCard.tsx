@@ -5,20 +5,10 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StatusBadge } from "@/components/ui/status-badge";
-import {
-  ChevronDown,
-  Download,
-  Package,
-  DollarSign,
-  Calendar,
-} from "lucide-react";
+import { ChevronDown, Download, Package, DollarSign, Calendar } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { OrderDetails } from "./OrderDetails";
 
@@ -79,10 +69,7 @@ export function BatchCard({ batch }: BatchCardProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   // Load orders when expanded
-  const orders = useQuery(
-    api.orders.getOrdersByBatchId,
-    isOpen ? { batchId: batch.batchId } : "skip"
-  );
+  const orders = useQuery(api.orders.getOrdersByBatchId, isOpen ? { batchId: batch.batchId } : "skip");
 
   return (
     <Card className="overflow-hidden">
@@ -92,9 +79,7 @@ export function BatchCard({ batch }: BatchCardProps) {
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <code className="text-sm font-mono font-medium">
-                    {batch.batchId}
-                  </code>
+                  <code className="text-sm font-mono font-medium">{batch.batchId}</code>
                   <StatusBadge status={batch.status} />
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -102,9 +87,7 @@ export function BatchCard({ batch }: BatchCardProps) {
                 </p>
               </div>
               <ChevronDown
-                className={`w-5 h-5 text-muted-foreground transition-transform ${
-                  isOpen ? "rotate-180" : ""
-                }`}
+                className={`w-5 h-5 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
               />
             </div>
           </CardHeader>
@@ -130,25 +113,15 @@ export function BatchCard({ batch }: BatchCardProps) {
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="w-4 h-4 text-muted-foreground" />
               <div>
-                <p className="font-medium text-xs">
-                  {formatDate(batch.estimatedDeliveryStart)}
-                </p>
+                <p className="font-medium text-xs">{formatDate(batch.estimatedDeliveryStart)}</p>
                 <p className="text-xs text-muted-foreground">Delivery</p>
               </div>
             </div>
           </div>
 
           {/* Export button */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full mb-3"
-            asChild
-          >
-            <a
-              href={`/api/orders/export?batchId=${batch.batchId}&format=csv`}
-              download
-            >
+          <Button variant="outline" size="sm" className="w-full mb-3" asChild>
+            <a href={`/api/orders/export?batchId=${batch.batchId}&format=csv`} download>
               <Download className="w-4 h-4 mr-2" />
               Export Manifest
             </a>
@@ -157,18 +130,12 @@ export function BatchCard({ batch }: BatchCardProps) {
           {/* Expanded order list */}
           <CollapsibleContent>
             {orders === undefined ? (
-              <div className="text-center py-4 text-sm text-muted-foreground">
-                Loading orders...
-              </div>
+              <div className="text-center py-4 text-sm text-muted-foreground">Loading orders...</div>
             ) : orders.length === 0 ? (
-              <div className="text-center py-4 text-sm text-muted-foreground">
-                No orders in this batch
-              </div>
+              <div className="text-center py-4 text-sm text-muted-foreground">No orders in this batch</div>
             ) : (
               <div className="border-t pt-3 mt-2">
-                <p className="text-xs font-medium text-muted-foreground mb-2">
-                  Orders ({orders.length})
-                </p>
+                <p className="text-xs font-medium text-muted-foreground mb-2">Orders ({orders.length})</p>
                 <ScrollArea className="h-[200px]">
                   <div className="space-y-2 pr-4">
                     {(orders as Order[]).map((order: Order) => (
@@ -184,4 +151,3 @@ export function BatchCard({ batch }: BatchCardProps) {
     </Card>
   );
 }
-

@@ -41,9 +41,7 @@ type OrderHistoryClientProps = {
  * @param preloadedBatches - Server-preloaded batch data
  * @returns Order history list with statistics
  */
-export function OrderHistoryClient({
-  preloadedBatches,
-}: OrderHistoryClientProps) {
+export function OrderHistoryClient({ preloadedBatches }: OrderHistoryClientProps) {
   const batches = usePreloadedQuery(preloadedBatches) as Batch[];
 
   // Calculate statistics
@@ -133,8 +131,7 @@ export function OrderHistoryClient({
               <Clock className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" />
               <h3 className="text-lg font-medium mb-2">No Orders Yet</h3>
               <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                Go to Mission Control to select delivery areas and create your
-                first batch of gift orders.
+                Go to Mission Control to select delivery areas and create your first batch of gift orders.
               </p>
             </div>
           ) : (
@@ -151,4 +148,3 @@ export function OrderHistoryClient({
     </div>
   );
 }
-

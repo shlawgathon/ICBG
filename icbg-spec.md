@@ -70,21 +70,21 @@
 
 ### Technology Stack
 
-| Layer | Technology | Version | Purpose |
-|-------|------------|---------|---------|
-| **Framework** | Next.js | 16.0.10 | Full-stack React framework with App Router |
-| **Language** | TypeScript | 5.7.x | Type-safe JavaScript |
-| **Runtime** | Node.js | 22.x LTS | Server-side JavaScript runtime |
-| **Database** | Convex | latest | Real-time backend database for persistent order history |
-| **Mapping** | Mapbox GL JS | 3.17.0 | Interactive WebGL maps |
-| **React Mapping** | react-map-gl | 8.1.0 | React wrapper for Mapbox GL JS |
-| **Draw Tools** | @mapbox/mapbox-gl-draw | 1.5.1 | Polygon drawing on maps |
-| **Geospatial** | @turf/turf | 7.3.1 | Geospatial analysis library |
-| **Address Data** | Overpass API | - | OpenStreetMap query API for real-world building/address data |
-| **AI/MCP** | dedalus-labs | 0.1.0-alpha.4 | MCP client SDK for AI agents |
-| **Styling** | Tailwind CSS | 4.x | Utility-first CSS framework |
-| **State** | React Query | 5.x | Server state management |
-| **ID Generation** | nanoid | 5.x | Unique ID generation |
+| Layer             | Technology             | Version       | Purpose                                                      |
+| ----------------- | ---------------------- | ------------- | ------------------------------------------------------------ |
+| **Framework**     | Next.js                | 16.0.10       | Full-stack React framework with App Router                   |
+| **Language**      | TypeScript             | 5.7.x         | Type-safe JavaScript                                         |
+| **Runtime**       | Node.js                | 22.x LTS      | Server-side JavaScript runtime                               |
+| **Database**      | Convex                 | latest        | Real-time backend database for persistent order history      |
+| **Mapping**       | Mapbox GL JS           | 3.17.0        | Interactive WebGL maps                                       |
+| **React Mapping** | react-map-gl           | 8.1.0         | React wrapper for Mapbox GL JS                               |
+| **Draw Tools**    | @mapbox/mapbox-gl-draw | 1.5.1         | Polygon drawing on maps                                      |
+| **Geospatial**    | @turf/turf             | 7.3.1         | Geospatial analysis library                                  |
+| **Address Data**  | Overpass API           | -             | OpenStreetMap query API for real-world building/address data |
+| **AI/MCP**        | dedalus-labs           | 0.1.0-alpha.4 | MCP client SDK for AI agents                                 |
+| **Styling**       | Tailwind CSS           | 4.x           | Utility-first CSS framework                                  |
+| **State**         | React Query            | 5.x           | Server state management                                      |
+| **ID Generation** | nanoid                 | 5.x           | Unique ID generation                                         |
 
 ---
 
@@ -103,14 +103,14 @@ The globe interface serves as the primary interaction surface where Santa's oper
 ```typescript
 // Map configuration for globe projection with draw capabilities
 const mapConfig = {
-  projection: 'globe',
-  style: 'mapbox://styles/mapbox/dark-v11',
+  projection: "globe",
+  style: "mapbox://styles/mapbox/dark-v11",
   fog: {
-    color: 'rgb(186, 210, 235)',
-    'high-color': 'rgb(36, 92, 223)',
-    'horizon-blend': 0.02,
-    'space-color': 'rgb(11, 11, 25)',
-    'star-intensity': 0.6
+    color: "rgb(186, 210, 235)",
+    "high-color": "rgb(36, 92, 223)",
+    "horizon-blend": 0.02,
+    "space-color": "rgb(11, 11, 25)",
+    "star-intensity": 0.6
   }
 };
 ```
@@ -134,6 +134,7 @@ Given a GeoJSON polygon representing a selected area, this service queries the [
 **Overpass API Integration:**
 
 The service constructs an Overpass QL (Query Language) query that retrieves:
+
 1. Buildings (`building=*`) within the polygon bounds
 2. Nodes with address information (`addr:housenumber`, `addr:street`)
 3. Ways (building outlines) with associated address tags
@@ -172,15 +173,15 @@ type Address = {
   /** Household metadata inferred from OSM building tags */
   metadata?: {
     /** Inferred from building type tags (apartments, house, residential) */
-    householdType?: 'family' | 'single' | 'elderly';
+    householdType?: "family" | "single" | "elderly";
     /** Inferred from nearby amenities (playground, school proximity) */
     hasChildren?: boolean;
     /** Inferred from building:levels and building age tags */
-    estimatedAge?: 'young' | 'middle' | 'senior';
+    estimatedAge?: "young" | "middle" | "senior";
   };
   /** Original OSM element type and ID for reference */
   osmRef?: {
-    type: 'node' | 'way' | 'relation';
+    type: "node" | "way" | "relation";
     id: number;
   };
 };
@@ -202,27 +203,27 @@ type AddressIdentifyResponse = {
 The service converts the GeoJSON polygon to an Overpass QL polygon filter, queries the API, and transforms the OSM response into our address schema. Turf.js is used for computing bounding boxes and centroids.
 
 ```typescript
-import * as turf from '@turf/turf';
+import * as turf from "@turf/turf";
 
 /** Overpass API public endpoint */
-const OVERPASS_API_URL = 'https://overpass-api.de/api/interpreter';
+const OVERPASS_API_URL = "https://overpass-api.de/api/interpreter";
 
 /**
  * Converts a GeoJSON polygon to Overpass QL poly filter format.
  * Overpass expects coordinates as "lat lon lat lon ..." space-separated string.
- * 
+ *
  * @param polygon - GeoJSON polygon geometry
  * @returns Overpass QL poly filter string
  */
 function polygonToOverpassPoly(polygon: GeoJSON.Polygon): string {
   const coords = polygon.coordinates[0];
-  return coords.map(([lng, lat]) => `${lat} ${lng}`).join(' ');
+  return coords.map(([lng, lat]) => `${lat} ${lng}`).join(" ");
 }
 
 /**
  * Builds an Overpass QL query to fetch buildings with addresses within a polygon.
  * Queries for nodes and ways with addr:* tags or building tags.
- * 
+ *
  * @param polygon - GeoJSON polygon defining the search area
  * @param limit - Maximum number of results (applied client-side due to Overpass limitations)
  * @returns Overpass QL query string
@@ -230,7 +231,7 @@ function polygonToOverpassPoly(polygon: GeoJSON.Polygon): string {
 function buildOverpassQuery(polygon: GeoJSON.Polygon): string {
   const bbox = turf.bbox(polygon);
   const [minLng, minLat, maxLng, maxLat] = bbox;
-  
+
   return `
     [out:json]
     [timeout:30]
@@ -250,41 +251,40 @@ function buildOverpassQuery(polygon: GeoJSON.Polygon): string {
 /**
  * Transforms an OSM element into our Address schema.
  * Extracts address components from OSM tags and computes centroid for ways.
- * 
+ *
  * @param element - Raw OSM element from Overpass response
  * @returns Transformed Address object
  */
 function osmElementToAddress(element: OverpassElement): Address {
   const tags = element.tags ?? {};
-  
+
   // Compute centroid for ways (buildings)
   let lat: number, lng: number;
-  if (element.type === 'way' && element.geometry) {
-    const coords = element.geometry.map(g => [g.lon, g.lat] as [number, number]);
+  if (element.type === "way" && element.geometry) {
+    const coords = element.geometry.map((g) => [g.lon, g.lat] as [number, number]);
     const centroid = turf.centroid(turf.polygon([coords]));
     [lng, lat] = centroid.geometry.coordinates;
   } else {
     lat = element.lat!;
     lng = element.lon!;
   }
-  
+
   // Construct street address from OSM tags
-  const houseNumber = tags['addr:housenumber'] ?? '';
-  const street = tags['addr:street'] ?? '';
-  const streetAddress = houseNumber && street 
-    ? `${houseNumber} ${street}` 
-    : tags['addr:full'] ?? `Building ${element.id}`;
-  
+  const houseNumber = tags["addr:housenumber"] ?? "";
+  const street = tags["addr:street"] ?? "";
+  const streetAddress =
+    houseNumber && street ? `${houseNumber} ${street}` : (tags["addr:full"] ?? `Building ${element.id}`);
+
   // Infer household metadata from building tags
-  const buildingType = tags['building'];
+  const buildingType = tags["building"];
   const metadata = inferHouseholdMetadata(buildingType, tags);
-  
+
   return {
     id: `osm_${element.type}_${element.id}`,
     streetAddress,
-    city: tags['addr:city'] ?? '',
-    state: tags['addr:state'] ?? '',
-    postalCode: tags['addr:postcode'] ?? '',
+    city: tags["addr:city"] ?? "",
+    state: tags["addr:state"] ?? "",
+    postalCode: tags["addr:postcode"] ?? "",
     lat,
     lng,
     metadata,
@@ -295,74 +295,68 @@ function osmElementToAddress(element: OverpassElement): Address {
 /**
  * Infers household metadata from OSM building and amenity tags.
  * Uses heuristics based on building type, size, and nearby features.
- * 
+ *
  * @param buildingType - OSM building tag value
  * @param tags - Full OSM tags object
  * @returns Inferred household metadata
  */
-function inferHouseholdMetadata(
-  buildingType: string | undefined,
-  tags: Record<string, string>
-): Address['metadata'] {
-  const levels = parseInt(tags['building:levels'] ?? '1', 10);
-  
+function inferHouseholdMetadata(buildingType: string | undefined, tags: Record<string, string>): Address["metadata"] {
+  const levels = parseInt(tags["building:levels"] ?? "1", 10);
+
   // Apartments suggest mixed demographics
-  if (buildingType === 'apartments' || levels > 3) {
-    return { householdType: 'family', hasChildren: Math.random() > 0.5, estimatedAge: 'middle' };
+  if (buildingType === "apartments" || levels > 3) {
+    return { householdType: "family", hasChildren: Math.random() > 0.5, estimatedAge: "middle" };
   }
-  
+
   // Single-family homes
-  if (buildingType === 'house' || buildingType === 'detached') {
-    return { householdType: 'family', hasChildren: true, estimatedAge: 'middle' };
+  if (buildingType === "house" || buildingType === "detached") {
+    return { householdType: "family", hasChildren: true, estimatedAge: "middle" };
   }
-  
+
   // Senior housing indicated by tags
-  if (tags['social_facility'] === 'nursing_home' || tags['amenity'] === 'retirement_home') {
-    return { householdType: 'elderly', hasChildren: false, estimatedAge: 'senior' };
+  if (tags["social_facility"] === "nursing_home" || tags["amenity"] === "retirement_home") {
+    return { householdType: "elderly", hasChildren: false, estimatedAge: "senior" };
   }
-  
+
   // Default for residential buildings
-  return { householdType: 'family', hasChildren: Math.random() > 0.4, estimatedAge: 'middle' };
+  return { householdType: "family", hasChildren: Math.random() > 0.4, estimatedAge: "middle" };
 }
 
 /**
  * Queries the Overpass API to identify addresses within the given polygon.
  * Fetches real OSM data and transforms it into our Address schema.
- * 
+ *
  * @param polygon - GeoJSON polygon defining the selection area
  * @param limit - Maximum number of addresses to return
  * @returns Promise resolving to array of addresses within the polygon
  */
-async function identifyAddressesInPolygon(
-  polygon: GeoJSON.Polygon,
-  limit: number = 50
-): Promise<Address[]> {
+async function identifyAddressesInPolygon(polygon: GeoJSON.Polygon, limit: number = 50): Promise<Address[]> {
   const query = buildOverpassQuery(polygon);
-  
+
   const response = await fetch(OVERPASS_API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: `data=${encodeURIComponent(query)}`
   });
-  
+
   if (!response.ok) {
     throw new Error(`Overpass API error: ${response.status} ${response.statusText}`);
   }
-  
+
   const data: OverpassResponse = await response.json();
-  
+
   // Transform OSM elements to addresses and apply limit
   const addresses = data.elements
     .map(osmElementToAddress)
-    .filter(addr => addr.streetAddress !== '')
+    .filter((addr) => addr.streetAddress !== "")
     .slice(0, limit);
-  
+
   return addresses;
 }
 
 /** Raw Overpass API response types */
 type OverpassElement = {
-  type: 'node' | 'way' | 'relation';
+  type: "node" | "way" | "relation";
   id: number;
   lat?: number;
   lon?: number;
@@ -383,7 +377,7 @@ type OverpassResponse = {
 Per the [OpenStreetMap License](https://www.openstreetmap.org/copyright), all responses must include attribution. The API response includes:
 
 ```typescript
-attribution: "© OpenStreetMap contributors"
+attribution: "© OpenStreetMap contributors";
 ```
 
 ### 3. AI-Powered Gift Pairing Service (Dedalus Labs MCP Integration)
@@ -401,8 +395,8 @@ The system connects to the AgentMail MCP server (`vroom08/agentmail-mcp`) hosted
 **Dedalus Integration Pattern:**
 
 ```typescript
-import Dedalus from 'dedalus-labs';
-import { DedalusRunner } from 'dedalus-labs';
+import Dedalus from "dedalus-labs";
+import { DedalusRunner } from "dedalus-labs";
 
 /**
  * Initializes the Dedalus client and runner for MCP-powered gift pairing
@@ -418,30 +412,30 @@ const runner = new DedalusRunner(client);
 /**
  * Custom tool for retrieving products from the mock catalog.
  * This local tool is combined with the MCP server's capabilities.
- * 
+ *
  * @param category - Product category to filter by
  * @returns Array of products in the specified category
  */
 function getProductsByCategory(category: string): Product[] {
-  return mockCatalog.filter(p => p.category === category);
+  return mockCatalog.filter((p) => p.category === category);
 }
 
 /**
  * Pairs gifts with addresses using AI-powered recommendations and
  * sends email notifications via the AgentMail MCP server.
  * Combines local catalog tools with MCP server for intelligent pairing.
- * 
+ *
  * @param addresses - Array of addresses requiring gift assignment
  * @returns Promise resolving to gift pairings for each address
  */
 async function pairGiftsWithAI(addresses: Address[]): Promise<GiftPairing[]> {
   const result = await runner.run({
     input: buildGiftPairingPrompt(addresses),
-    model: 'openai/gpt-4o-mini',
+    model: "openai/gpt-4o-mini",
     tools: [getProductsByCategory],
-    mcpServers: ['vroom08/agentmail-mcp']
+    mcpServers: ["vroom08/agentmail-mcp"]
   });
-  
+
   return parseGiftPairings(result.finalOutput);
 }
 ```
@@ -453,7 +447,7 @@ type GiftPairRequest = {
   /** Array of addresses to pair with gifts */
   addresses: Address[];
   /** Optional strategy for gift assignment */
-  strategy?: 'ai-recommended' | 'round-robin' | 'single-product';
+  strategy?: "ai-recommended" | "round-robin" | "single-product";
   /** Category constraint for gifts (optional) */
   category?: string;
 };
@@ -472,9 +466,9 @@ type Product = {
   /** Price in USD */
   price: number;
   /** Product category */
-  category: 'toys' | 'books' | 'electronics' | 'home' | 'clothing';
+  category: "toys" | "books" | "electronics" | "home" | "clothing";
   /** Age appropriateness */
-  ageRange?: 'children' | 'teen' | 'adult' | 'all';
+  ageRange?: "children" | "teen" | "adult" | "all";
 };
 
 type GiftPairing = {
@@ -502,10 +496,38 @@ The system includes a curated catalog of 20 products across categories, designed
 
 ```typescript
 const mockCatalog: Product[] = [
-  { asin: 'B0X001', name: 'LEGO Holiday Train Set', description: 'Classic holiday train with 4 cars', price: 49.99, category: 'toys', ageRange: 'children' },
-  { asin: 'B0X002', name: 'Illustrated Christmas Stories', description: 'Collection of classic tales', price: 19.99, category: 'books', ageRange: 'children' },
-  { asin: 'B0X003', name: 'Smart Home Display', description: '10-inch smart display', price: 129.99, category: 'electronics', ageRange: 'adult' },
-  { asin: 'B0X004', name: 'Cozy Holiday Throw Blanket', description: 'Soft fleece with festive patterns', price: 34.99, category: 'home', ageRange: 'all' },
+  {
+    asin: "B0X001",
+    name: "LEGO Holiday Train Set",
+    description: "Classic holiday train with 4 cars",
+    price: 49.99,
+    category: "toys",
+    ageRange: "children"
+  },
+  {
+    asin: "B0X002",
+    name: "Illustrated Christmas Stories",
+    description: "Collection of classic tales",
+    price: 19.99,
+    category: "books",
+    ageRange: "children"
+  },
+  {
+    asin: "B0X003",
+    name: "Smart Home Display",
+    description: "10-inch smart display",
+    price: 129.99,
+    category: "electronics",
+    ageRange: "adult"
+  },
+  {
+    asin: "B0X004",
+    name: "Cozy Holiday Throw Blanket",
+    description: "Soft fleece with festive patterns",
+    price: 34.99,
+    category: "home",
+    ageRange: "all"
+  }
   // ... additional products
 ];
 ```
@@ -549,7 +571,7 @@ type SendNotificationsResponse = {
   /** Detailed results for each recipient */
   results: Array<{
     email: string;
-    status: 'sent' | 'failed';
+    status: "sent" | "failed";
     error?: string;
   }>;
 };
@@ -558,8 +580,8 @@ type SendNotificationsResponse = {
 **Implementation:**
 
 ```typescript
-import Dedalus from 'dedalus-labs';
-import { DedalusRunner } from 'dedalus-labs';
+import Dedalus from "dedalus-labs";
+import { DedalusRunner } from "dedalus-labs";
 
 const client = new Dedalus({
   apiKey: process.env.DEDALUS_API_KEY
@@ -570,14 +592,14 @@ const runner = new DedalusRunner(client);
 /**
  * Sends festive delivery notification emails via AgentMail MCP server.
  * Each recipient receives a personalized email announcing their gift delivery.
- * 
+ *
  * @param recipients - Array of notification recipients with email and address info
  * @param estimatedDelivery - Expected delivery date string
  * @returns Promise resolving to send results for each recipient
  */
 async function sendDeliveryNotifications(
   recipients: Array<{ email: string; name: string; address: string }>,
-  estimatedDelivery: string = 'December 23-24, 2025'
+  estimatedDelivery: string = "December 23-24, 2025"
 ): Promise<SendNotificationsResponse> {
   const prompt = `
 You are Santa's notification coordinator. Send festive email notifications
@@ -594,11 +616,15 @@ For each recipient, use the AgentMail tools to send an email with:
   - Signed "With holiday cheer, Santa's Workshop"
 
 Recipients to notify:
-${recipients.map(r => `
+${recipients
+  .map(
+    (r) => `
 - Name: ${r.name}
 - Email: ${r.email}
 - Address: ${r.address}
-`).join('\n')}
+`
+  )
+  .join("\n")}
 
 After sending all emails, report back the status of each send operation
 in JSON format:
@@ -612,8 +638,8 @@ in JSON format:
 
   const result = await runner.run({
     input: prompt,
-    model: 'openai/gpt-4o-mini',
-    mcpServers: ['vroom08/agentmail-mcp']
+    model: "openai/gpt-4o-mini",
+    mcpServers: ["vroom08/agentmail-mcp"]
   });
 
   return parseNotificationResults(result.finalOutput);
@@ -657,7 +683,7 @@ function useCreateOrders() {
       totalCost,
       orderCount: pairings.length,
       estimatedDeliveryStart: "2025-12-23",
-      estimatedDeliveryEnd: "2025-12-24",
+      estimatedDeliveryEnd: "2025-12-24"
     });
 
     // Create all orders in single mutation
@@ -673,7 +699,7 @@ function useCreateOrders() {
         shippingCost: 0,
         pairingReason: pairing.pairingReason,
         estimatedDeliveryStart: "2025-12-23",
-        estimatedDeliveryEnd: "2025-12-24",
+        estimatedDeliveryEnd: "2025-12-24"
       };
     });
 
@@ -697,7 +723,7 @@ type Order = {
   /** Parent batch identifier */
   batchId: string;
   /** Current order status */
-  status: 'ORDER_CREATED' | 'PENDING_FULFILLMENT' | 'SHIPPED' | 'DELIVERED';
+  status: "ORDER_CREATED" | "PENDING_FULFILLMENT" | "SHIPPED" | "DELIVERED";
   /** Full shipping address (JSON stringified) */
   shippingAddress: string;
   /** Product ASIN */
@@ -731,7 +757,7 @@ type OrderBatch = {
   /** Unique batch identifier with BATCH- prefix */
   batchId: string;
   /** Current batch status */
-  status: 'PENDING' | 'CONFIRMED' | 'EXPORTED' | 'FULFILLED';
+  status: "PENDING" | "CONFIRMED" | "EXPORTED" | "FULFILLED";
   /** Total cost of all orders */
   totalCost: number;
   /** Number of orders in batch */
@@ -752,12 +778,12 @@ type OrderBatch = {
 Order IDs follow a festive pattern that maintains uniqueness while reinforcing the theme:
 
 ```typescript
-import { nanoid } from 'nanoid';
+import { nanoid } from "nanoid";
 
 /**
  * Generates a festive order ID with the HOHOHO prefix.
  * Uses nanoid for the unique suffix to ensure collision resistance.
- * 
+ *
  * @returns A unique order identifier in the format HOHOHO-XXXXXXXXXX
  */
 function generateOrderId(): string {
@@ -781,7 +807,7 @@ type ExportParams = {
   /** Batch ID to export */
   batchId: string;
   /** Export format */
-  format: 'csv' | 'json';
+  format: "csv" | "json";
 };
 ```
 
@@ -818,13 +844,14 @@ export async function GET(request: NextRequest) {
   return new NextResponse(csv, {
     headers: {
       "Content-Type": "text/csv",
-      "Content-Disposition": `attachment; filename="${batchId}-manifest.csv"`,
-    },
+      "Content-Disposition": `attachment; filename="${batchId}-manifest.csv"`
+    }
   });
 }
 
 function generateOrdersCSV(orders: Order[]): string {
-  const header = "OrderID,Status,RecipientAddress,City,State,PostalCode,Latitude,Longitude,ProductName,ProductASIN,Price,EstimatedDelivery";
+  const header =
+    "OrderID,Status,RecipientAddress,City,State,PostalCode,Latitude,Longitude,ProductName,ProductASIN,Price,EstimatedDelivery";
   const rows = orders.map((order) => {
     const addr = JSON.parse(order.shippingAddress);
     return [
@@ -839,7 +866,7 @@ function generateOrdersCSV(orders: Order[]): string {
       `"${order.productName}"`,
       order.productAsin,
       order.productPrice.toFixed(2),
-      order.estimatedDeliveryEnd,
+      order.estimatedDeliveryEnd
     ].join(",");
   });
   return [header, ...rows].join("\n");
@@ -859,32 +886,32 @@ HOHOHO-ABC123,ORDER_CREATED,"123 Main St",San Francisco,CA,94102,37.7749,-122.41
 
 ### Route Map
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/addresses/identify` | Identify addresses within polygon |
-| `POST` | `/api/gifts/pair` | AI-powered gift pairing |
+| Method | Path                      | Description                                       |
+| ------ | ------------------------- | ------------------------------------------------- |
+| `POST` | `/api/addresses/identify` | Identify addresses within polygon                 |
+| `POST` | `/api/gifts/pair`         | AI-powered gift pairing                           |
 | `POST` | `/api/notifications/send` | Send delivery notification emails (AgentMail MCP) |
-| `GET` | `/api/orders/export` | Export delivery manifest (reads from Convex) |
-| `GET` | `/api/catalog` | Retrieve product catalog |
+| `GET`  | `/api/orders/export`      | Export delivery manifest (reads from Convex)      |
+| `GET`  | `/api/catalog`            | Retrieve product catalog                          |
 
 ### Convex Function Map
 
 Order creation and retrieval are handled directly through Convex functions for real-time reactivity:
 
-| Type | Function | Description |
-|------|----------|-------------|
-| `mutation` | `orderBatches.createBatch` | Create a new order batch |
-| `mutation` | `orderBatches.updateBatchStatus` | Update batch fulfillment status |
-| `query` | `orderBatches.listBatches` | List all batches (real-time) |
-| `query` | `orderBatches.getBatchByBatchId` | Get batch by ID |
-| `query` | `orderBatches.getBatchesByStatus` | Filter batches by status |
-| `mutation` | `orders.createOrder` | Create a single order |
-| `mutation` | `orders.createOrdersBatch` | Batch create multiple orders |
-| `mutation` | `orders.updateOrderStatus` | Update order fulfillment status |
-| `mutation` | `orders.updateOrderEmailStatus` | Mark email as sent |
-| `query` | `orders.listOrders` | List all orders (real-time) |
-| `query` | `orders.getOrderByOrderId` | Get order by ID |
-| `query` | `orders.getOrdersByBatchId` | Get orders in a batch |
+| Type       | Function                          | Description                     |
+| ---------- | --------------------------------- | ------------------------------- |
+| `mutation` | `orderBatches.createBatch`        | Create a new order batch        |
+| `mutation` | `orderBatches.updateBatchStatus`  | Update batch fulfillment status |
+| `query`    | `orderBatches.listBatches`        | List all batches (real-time)    |
+| `query`    | `orderBatches.getBatchByBatchId`  | Get batch by ID                 |
+| `query`    | `orderBatches.getBatchesByStatus` | Filter batches by status        |
+| `mutation` | `orders.createOrder`              | Create a single order           |
+| `mutation` | `orders.createOrdersBatch`        | Batch create multiple orders    |
+| `mutation` | `orders.updateOrderStatus`        | Update order fulfillment status |
+| `mutation` | `orders.updateOrderEmailStatus`   | Mark email as sent              |
+| `query`    | `orders.listOrders`               | List all orders (real-time)     |
+| `query`    | `orders.getOrderByOrderId`        | Get order by ID                 |
+| `query`    | `orders.getOrdersByBatchId`       | Get orders in a batch           |
 
 ### Error Handling
 
@@ -903,18 +930,18 @@ type APIError = {
 
 Standard error codes:
 
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| `INVALID_POLYGON` | 400 | Provided polygon geometry is invalid |
-| `LIMIT_EXCEEDED` | 400 | Requested more than 50 addresses |
-| `OVERPASS_TIMEOUT` | 504 | Overpass API query timed out (area too large) |
-| `OVERPASS_ERROR` | 502 | Overpass API communication failure |
-| `NO_ADDRESSES_FOUND` | 404 | No addresses found in selected area (sparse OSM data) |
-| `DEDALUS_ERROR` | 502 | MCP server communication failure |
-| `AGENTMAIL_ERROR` | 502 | AgentMail MCP server email delivery failure |
-| `INVALID_EMAIL` | 400 | One or more recipient email addresses are invalid |
-| `BATCH_NOT_FOUND` | 404 | Order batch does not exist |
-| `INTERNAL_ERROR` | 500 | Unexpected server error |
+| Code                 | HTTP Status | Description                                           |
+| -------------------- | ----------- | ----------------------------------------------------- |
+| `INVALID_POLYGON`    | 400         | Provided polygon geometry is invalid                  |
+| `LIMIT_EXCEEDED`     | 400         | Requested more than 50 addresses                      |
+| `OVERPASS_TIMEOUT`   | 504         | Overpass API query timed out (area too large)         |
+| `OVERPASS_ERROR`     | 502         | Overpass API communication failure                    |
+| `NO_ADDRESSES_FOUND` | 404         | No addresses found in selected area (sparse OSM data) |
+| `DEDALUS_ERROR`      | 502         | MCP server communication failure                      |
+| `AGENTMAIL_ERROR`    | 502         | AgentMail MCP server email delivery failure           |
+| `INVALID_EMAIL`      | 400         | One or more recipient email addresses are invalid     |
+| `BATCH_NOT_FOUND`    | 404         | Order batch does not exist                            |
+| `INTERNAL_ERROR`     | 500         | Unexpected server error                               |
 
 ---
 
@@ -1019,12 +1046,7 @@ export default defineSchema({
     /** Unique batch identifier with BATCH- prefix */
     batchId: v.string(),
     /** Current batch status in the fulfillment pipeline */
-    status: v.union(
-      v.literal("PENDING"),
-      v.literal("CONFIRMED"),
-      v.literal("EXPORTED"),
-      v.literal("FULFILLED")
-    ),
+    status: v.union(v.literal("PENDING"), v.literal("CONFIRMED"), v.literal("EXPORTED"), v.literal("FULFILLED")),
     /** Total cost of all orders in the batch (USD) */
     totalCost: v.number(),
     /** Number of orders in this batch */
@@ -1036,7 +1058,7 @@ export default defineSchema({
     /** Estimated delivery window end date (ISO string) */
     estimatedDeliveryEnd: v.string(),
     /** Optional notes or metadata for the batch */
-    notes: v.optional(v.string()),
+    notes: v.optional(v.string())
   })
     .index("by_batchId", ["batchId"])
     .index("by_status", ["status"]),
@@ -1078,7 +1100,7 @@ export default defineSchema({
     /** Estimated delivery start date (ISO string) */
     estimatedDeliveryStart: v.string(),
     /** Estimated delivery end date (ISO string) */
-    estimatedDeliveryEnd: v.string(),
+    estimatedDeliveryEnd: v.string()
   })
     .index("by_orderId", ["orderId"])
     .index("by_batchId", ["batchId"])
@@ -1100,10 +1122,10 @@ export default defineSchema({
     /** Reference to batch created from this selection (optional) */
     batchId: v.optional(v.string()),
     /** Human-readable location description (e.g., "Castro District, SF") */
-    locationDescription: v.optional(v.string()),
+    locationDescription: v.optional(v.string())
   })
     .index("by_selectionId", ["selectionId"])
-    .index("by_batchId", ["batchId"]),
+    .index("by_batchId", ["batchId"])
 });
 ```
 
@@ -1135,7 +1157,7 @@ export const createBatch = mutation({
     selectionPolygon: v.optional(v.string()),
     estimatedDeliveryStart: v.string(),
     estimatedDeliveryEnd: v.string(),
-    notes: v.optional(v.string()),
+    notes: v.optional(v.string())
   },
   handler: async (ctx, args) => {
     const batchDocId = await ctx.db.insert("orderBatches", {
@@ -1146,10 +1168,10 @@ export const createBatch = mutation({
       selectionPolygon: args.selectionPolygon,
       estimatedDeliveryStart: args.estimatedDeliveryStart,
       estimatedDeliveryEnd: args.estimatedDeliveryEnd,
-      notes: args.notes,
+      notes: args.notes
     });
     return batchDocId;
-  },
+  }
 });
 
 /**
@@ -1165,7 +1187,7 @@ export const getBatchByBatchId = query({
       .query("orderBatches")
       .withIndex("by_batchId", (q) => q.eq("batchId", args.batchId))
       .unique();
-  },
+  }
 });
 
 /**
@@ -1178,7 +1200,7 @@ export const listBatches = query({
   args: {},
   handler: async (ctx) => {
     return await ctx.db.query("orderBatches").order("desc").collect();
-  },
+  }
 });
 
 /**
@@ -1190,12 +1212,7 @@ export const listBatches = query({
  */
 export const getBatchesByStatus = query({
   args: {
-    status: v.union(
-      v.literal("PENDING"),
-      v.literal("CONFIRMED"),
-      v.literal("EXPORTED"),
-      v.literal("FULFILLED")
-    ),
+    status: v.union(v.literal("PENDING"), v.literal("CONFIRMED"), v.literal("EXPORTED"), v.literal("FULFILLED"))
   },
   handler: async (ctx, args) => {
     return await ctx.db
@@ -1203,7 +1220,7 @@ export const getBatchesByStatus = query({
       .withIndex("by_status", (q) => q.eq("status", args.status))
       .order("desc")
       .collect();
-  },
+  }
 });
 
 /**
@@ -1215,12 +1232,7 @@ export const getBatchesByStatus = query({
 export const updateBatchStatus = mutation({
   args: {
     batchId: v.string(),
-    status: v.union(
-      v.literal("PENDING"),
-      v.literal("CONFIRMED"),
-      v.literal("EXPORTED"),
-      v.literal("FULFILLED")
-    ),
+    status: v.union(v.literal("PENDING"), v.literal("CONFIRMED"), v.literal("EXPORTED"), v.literal("FULFILLED"))
   },
   handler: async (ctx, args) => {
     const batch = await ctx.db
@@ -1233,7 +1245,7 @@ export const updateBatchStatus = mutation({
     }
 
     await ctx.db.patch(batch._id, { status: args.status });
-  },
+  }
 });
 ```
 
@@ -1269,7 +1281,7 @@ export const createOrder = mutation({
     pairingReason: v.optional(v.string()),
     recipientEmail: v.optional(v.string()),
     estimatedDeliveryStart: v.string(),
-    estimatedDeliveryEnd: v.string(),
+    estimatedDeliveryEnd: v.string()
   },
   handler: async (ctx, args) => {
     const orderDocId = await ctx.db.insert("orders", {
@@ -1286,10 +1298,10 @@ export const createOrder = mutation({
       recipientEmail: args.recipientEmail,
       emailSent: false,
       estimatedDeliveryStart: args.estimatedDeliveryStart,
-      estimatedDeliveryEnd: args.estimatedDeliveryEnd,
+      estimatedDeliveryEnd: args.estimatedDeliveryEnd
     });
     return orderDocId;
-  },
+  }
 });
 
 /**
@@ -1313,9 +1325,9 @@ export const createOrdersBatch = mutation({
         pairingReason: v.optional(v.string()),
         recipientEmail: v.optional(v.string()),
         estimatedDeliveryStart: v.string(),
-        estimatedDeliveryEnd: v.string(),
+        estimatedDeliveryEnd: v.string()
       })
-    ),
+    )
   },
   handler: async (ctx, args) => {
     const orderDocIds: string[] = [];
@@ -1335,13 +1347,13 @@ export const createOrdersBatch = mutation({
         recipientEmail: order.recipientEmail,
         emailSent: false,
         estimatedDeliveryStart: order.estimatedDeliveryStart,
-        estimatedDeliveryEnd: order.estimatedDeliveryEnd,
+        estimatedDeliveryEnd: order.estimatedDeliveryEnd
       });
       orderDocIds.push(docId);
     }
 
     return orderDocIds;
-  },
+  }
 });
 
 /**
@@ -1357,7 +1369,7 @@ export const getOrderByOrderId = query({
       .query("orders")
       .withIndex("by_orderId", (q) => q.eq("orderId", args.orderId))
       .unique();
-  },
+  }
 });
 
 /**
@@ -1374,7 +1386,7 @@ export const getOrdersByBatchId = query({
       .query("orders")
       .withIndex("by_batchId", (q) => q.eq("batchId", args.batchId))
       .collect();
-  },
+  }
 });
 
 /**
@@ -1387,7 +1399,7 @@ export const listOrders = query({
   args: {},
   handler: async (ctx) => {
     return await ctx.db.query("orders").order("desc").collect();
-  },
+  }
 });
 
 /**
@@ -1404,7 +1416,7 @@ export const updateOrderStatus = mutation({
       v.literal("PENDING_FULFILLMENT"),
       v.literal("SHIPPED"),
       v.literal("DELIVERED")
-    ),
+    )
   },
   handler: async (ctx, args) => {
     const order = await ctx.db
@@ -1417,7 +1429,7 @@ export const updateOrderStatus = mutation({
     }
 
     await ctx.db.patch(order._id, { status: args.status });
-  },
+  }
 });
 
 /**
@@ -1429,7 +1441,7 @@ export const updateOrderStatus = mutation({
 export const updateOrderEmailStatus = mutation({
   args: {
     orderId: v.string(),
-    emailSent: v.boolean(),
+    emailSent: v.boolean()
   },
   handler: async (ctx, args) => {
     const order = await ctx.db
@@ -1442,7 +1454,7 @@ export const updateOrderEmailStatus = mutation({
     }
 
     await ctx.db.patch(order._id, { emailSent: args.emailSent });
-  },
+  }
 });
 ```
 
@@ -1904,8 +1916,8 @@ The project uses the **AgentMail MCP server** (`vroom08/agentmail-mcp`) from the
  * This setup enables AI-powered gift pairing with email notifications
  * via the AgentMail MCP server from the Dedalus Marketplace.
  */
-import Dedalus from 'dedalus-labs';
-import { DedalusRunner } from 'dedalus-labs';
+import Dedalus from "dedalus-labs";
+import { DedalusRunner } from "dedalus-labs";
 
 /**
  * Initializes the Dedalus client with API key from environment.
@@ -1926,15 +1938,15 @@ const runner = new DedalusRunner(client);
  * Local tool function for querying the product catalog.
  * Dedalus SDK automatically extracts the function signature and
  * docstring to generate the tool schema for the LLM.
- * 
+ *
  * @param category - Product category to filter ('toys', 'books', 'electronics', 'home', 'clothing')
  * @param ageRange - Target age range ('children', 'teen', 'adult', 'all')
  * @returns Array of products matching the criteria
  */
 function searchProducts(category: string, ageRange?: string): Product[] {
-  return mockCatalog.filter(product => {
+  return mockCatalog.filter((product) => {
     const categoryMatch = product.category === category;
-    const ageMatch = !ageRange || product.ageRange === ageRange || product.ageRange === 'all';
+    const ageMatch = !ageRange || product.ageRange === ageRange || product.ageRange === "all";
     return categoryMatch && ageMatch;
   });
 }
@@ -1943,7 +1955,7 @@ function searchProducts(category: string, ageRange?: string): Product[] {
  * Generates gift recommendations for a list of addresses using AI,
  * then sends email notifications via the AgentMail MCP server.
  * Combines local product search tools with MCP server email capabilities.
- * 
+ *
  * @param addresses - Array of addresses with household metadata
  * @param recipientEmails - Optional map of address IDs to recipient email addresses
  * @returns Promise resolving to AI-generated gift pairings with notification status
@@ -1965,14 +1977,18 @@ using the AgentMail email tools. The email should have:
   Sign it "With holiday cheer, Santa's Workshop"
 
 Households to process:
-${addresses.map(a => `
+${addresses
+  .map(
+    (a) => `
 - Address ID: ${a.id}
 - Address: ${a.streetAddress}, ${a.city}, ${a.state} ${a.postalCode}
-- Household Type: ${a.metadata?.householdType ?? 'unknown'}
-- Has Children: ${a.metadata?.hasChildren ?? 'unknown'}
-- Estimated Age: ${a.metadata?.estimatedAge ?? 'unknown'}
-${recipientEmails?.get(a.id) ? `- Email: ${recipientEmails.get(a.id)}` : ''}
-`).join('\n')}
+- Household Type: ${a.metadata?.householdType ?? "unknown"}
+- Has Children: ${a.metadata?.hasChildren ?? "unknown"}
+- Estimated Age: ${a.metadata?.estimatedAge ?? "unknown"}
+${recipientEmails?.get(a.id) ? `- Email: ${recipientEmails.get(a.id)}` : ""}
+`
+  )
+  .join("\n")}
 
 Use the searchProducts tool to find appropriate gifts. For each household,
 provide your recommendation in the following JSON format:
@@ -1986,9 +2002,9 @@ provide your recommendation in the following JSON format:
 
   const result = await runner.run({
     input: prompt,
-    model: 'openai/gpt-4o-mini',
+    model: "openai/gpt-4o-mini",
     tools: [searchProducts],
-    mcpServers: ['vroom08/agentmail-mcp']
+    mcpServers: ["vroom08/agentmail-mcp"]
   });
 
   return parseRecommendations(result.finalOutput);
@@ -2017,24 +2033,20 @@ type DeliveryNotificationEmail = {
   /** Recipient email address */
   to: string;
   /** Festive subject line with emoji */
-  subject: '🎅 Santa\'s Delivering Your Present!';
+  subject: "🎅 Santa's Delivering Your Present!";
   /** HTML-formatted email body */
   body: string;
 };
 
 /**
  * Generates the HTML body for a delivery notification email.
- * 
+ *
  * @param recipientName - Name of the gift recipient
  * @param address - Delivery address
  * @param estimatedDelivery - Expected delivery date range
  * @returns Formatted HTML email body
  */
-function generateNotificationEmailBody(
-  recipientName: string,
-  address: string,
-  estimatedDelivery: string
-): string {
+function generateNotificationEmailBody(recipientName: string, address: string, estimatedDelivery: string): string {
   return `
     <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <h1 style="color: #c41e3a; text-align: center;">🎄 Special Delivery Incoming! 🎄</h1>
@@ -2063,23 +2075,23 @@ If the MCP server is unavailable, the system falls back to rule-based gift assig
  * Fallback gift pairing strategy when MCP server is unavailable.
  * Uses simple rule-based logic based on household metadata.
  * Email notifications are skipped in fallback mode.
- * 
+ *
  * @param address - Address with household metadata
  * @returns Product selected using rule-based logic
  */
 function fallbackGiftPairing(address: Address): Product {
   const { metadata } = address;
-  
+
   if (metadata?.hasChildren) {
-    return mockCatalog.find(p => p.category === 'toys' && p.ageRange === 'children')!;
+    return mockCatalog.find((p) => p.category === "toys" && p.ageRange === "children")!;
   }
-  
-  if (metadata?.estimatedAge === 'senior') {
-    return mockCatalog.find(p => p.category === 'home' && p.ageRange === 'all')!;
+
+  if (metadata?.estimatedAge === "senior") {
+    return mockCatalog.find((p) => p.category === "home" && p.ageRange === "all")!;
   }
-  
+
   // Default: books are universally appreciated
-  return mockCatalog.find(p => p.category === 'books')!;
+  return mockCatalog.find((p) => p.category === "books")!;
 }
 ```
 
@@ -2093,13 +2105,13 @@ function fallbackGiftPairing(address: Address): Product {
 
 ### Demo Flow (2 minutes)
 
-1. **Globe Interaction (30 sec):** "Here's our interactive globe. I can select any location worldwide—let me zoom into San Francisco and draw a selection around the Castro neighborhood." *[Draw polygon on map]*
+1. **Globe Interaction (30 sec):** "Here's our interactive globe. I can select any location worldwide—let me zoom into San Francisco and draw a selection around the Castro neighborhood." _[Draw polygon on map]_
 
-2. **Address Identification (20 sec):** "Watch this—ICBG queries OpenStreetMap's Overpass API in real-time and identifies 47 actual households within our selection. These are real addresses from the world's largest open geographic database, not mock data." *[Show address list with OSM attribution]*
+2. **Address Identification (20 sec):** "Watch this—ICBG queries OpenStreetMap's Overpass API in real-time and identifies 47 actual households within our selection. These are real addresses from the world's largest open geographic database, not mock data." _[Show address list with OSM attribution]_
 
-3. **AI Gift Pairing + Email Notifications (40 sec):** "Now the magic happens. Using the AgentMail MCP server from the Dedalus Labs Marketplace, our AI analyzes each household—inferring demographics from building types—and recommends appropriate gifts. When gifts are assigned, recipients automatically receive festive email notifications saying 'Santa's delivering your present!' Watch as families get matched with toys while seniors receive cozy home goods." *[Trigger pairing, show progress, display email notification preview]*
+3. **AI Gift Pairing + Email Notifications (40 sec):** "Now the magic happens. Using the AgentMail MCP server from the Dedalus Labs Marketplace, our AI analyzes each household—inferring demographics from building types—and recommends appropriate gifts. When gifts are assigned, recipients automatically receive festive email notifications saying 'Santa's delivering your present!' Watch as families get matched with toys while seniors receive cozy home goods." _[Trigger pairing, show progress, display email notification preview]_
 
-4. **Order Generation + Persistence (30 sec):** "With one click, I generate 47 orders totaling $1,847—all persisted to our Convex database in real-time. Each order has a unique ID, real shipping address, and estimated delivery window. Watch the order history dashboard update instantly without refreshing. I can export this as a delivery manifest for our fulfillment team, or review past batches anytime." *[Click confirm, show summary updating in real-time, show order history, download CSV]*
+4. **Order Generation + Persistence (30 sec):** "With one click, I generate 47 orders totaling $1,847—all persisted to our Convex database in real-time. Each order has a unique ID, real shipping address, and estimated delivery window. Watch the order history dashboard update instantly without refreshing. I can export this as a delivery manifest for our fulfillment team, or review past batches anytime." _[Click confirm, show summary updating in real-time, show order history, download CSV]_
 
 ### Closing (30 seconds)
 
@@ -2220,34 +2232,34 @@ icbg/
 
 ### Technical Risks
 
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
-| Overpass API timeout | Medium | High | Limit polygon size, implement 30s timeout, show user-friendly error |
-| Overpass API rate limiting | Low | Medium | Use appropriate query limits, cache results, consider secondary endpoint |
-| Sparse OSM data in selected area | Medium | Medium | Display helpful message, suggest alternative areas with better coverage |
-| Mapbox rate limiting | Low | Medium | Use cached tiles, limit zoom interactions |
-| Dedalus API unavailable | Low | High | Implement fallback rule-based pairing (without email) |
-| AgentMail MCP unavailable | Low | Medium | Skip email notifications, proceed with gift pairing only |
-| Email delivery failures | Low | Low | Log failures, display partial success in UI, allow retry |
-| Browser WebGL issues | Low | Medium | Test in Chrome, have Firefox backup |
-| State management complexity | Medium | Medium | Keep state flat, use Convex for persistence and React Query for API state |
-| Convex connection issues | Low | Medium | Convex has built-in retry logic; show connection status indicator in UI |
-| Convex schema migration | Low | Low | Schema is defined upfront; use `npx convex dev` to sync changes automatically |
+| Risk                             | Probability | Impact | Mitigation                                                                    |
+| -------------------------------- | ----------- | ------ | ----------------------------------------------------------------------------- |
+| Overpass API timeout             | Medium      | High   | Limit polygon size, implement 30s timeout, show user-friendly error           |
+| Overpass API rate limiting       | Low         | Medium | Use appropriate query limits, cache results, consider secondary endpoint      |
+| Sparse OSM data in selected area | Medium      | Medium | Display helpful message, suggest alternative areas with better coverage       |
+| Mapbox rate limiting             | Low         | Medium | Use cached tiles, limit zoom interactions                                     |
+| Dedalus API unavailable          | Low         | High   | Implement fallback rule-based pairing (without email)                         |
+| AgentMail MCP unavailable        | Low         | Medium | Skip email notifications, proceed with gift pairing only                      |
+| Email delivery failures          | Low         | Low    | Log failures, display partial success in UI, allow retry                      |
+| Browser WebGL issues             | Low         | Medium | Test in Chrome, have Firefox backup                                           |
+| State management complexity      | Medium      | Medium | Keep state flat, use Convex for persistence and React Query for API state     |
+| Convex connection issues         | Low         | Medium | Convex has built-in retry logic; show connection status indicator in UI       |
+| Convex schema migration          | Low         | Low    | Schema is defined upfront; use `npx convex dev` to sync changes automatically |
 
 ### Time Risks
 
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
-| Scope creep | High | High | Strict scope lock in Hour 1 |
-| Integration delays | Medium | High | Build components independently, integrate last |
-| Demo environment issues | Low | High | Test on demo machine early |
+| Risk                    | Probability | Impact | Mitigation                                     |
+| ----------------------- | ----------- | ------ | ---------------------------------------------- |
+| Scope creep             | High        | High   | Strict scope lock in Hour 1                    |
+| Integration delays      | Medium      | High   | Build components independently, integrate last |
+| Demo environment issues | Low         | High   | Test on demo machine early                     |
 
 ### Demo Risks
 
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
-| Network issues | Medium | High | Cache all API responses, work offline |
-| Live demo failure | Low | High | Record backup video of working demo |
+| Risk              | Probability | Impact | Mitigation                            |
+| ----------------- | ----------- | ------ | ------------------------------------- |
+| Network issues    | Medium      | High   | Cache all API responses, work offline |
+| Live demo failure | Low         | High   | Record backup video of working demo   |
 
 ---
 
@@ -2372,7 +2384,7 @@ Address data is sourced in real-time from the OpenStreetMap Overpass API. Below 
     "state": "CA",
     "postalCode": "94114",
     "lat": 37.7609,
-    "lng": -122.4350
+    "lng": -122.435
   },
   "product": {
     "asin": "B0X001",
@@ -2385,7 +2397,7 @@ Address data is sourced in real-time from the OpenStreetMap Overpass API. Below 
   },
   "cost": {
     "productPrice": 49.99,
-    "shipping": 0.00,
+    "shipping": 0.0,
     "total": 49.99
   }
 }
@@ -2419,25 +2431,21 @@ Convex uses the `v` validator library for defining schemas:
 import { v } from "convex/values";
 
 // Primitive validators
-v.string()                    // String values
-v.number()                    // Numeric values (integers and floats)
-v.boolean()                   // true or false
-v.null()                      // Literal null
+v.string(); // String values
+v.number(); // Numeric values (integers and floats)
+v.boolean(); // true or false
+v.null(); // Literal null
 
 // Complex validators
-v.array(v.string())           // Array of strings
-v.object({ key: v.string() }) // Object with typed properties
-v.optional(v.string())        // String or undefined
+v.array(v.string()); // Array of strings
+v.object({ key: v.string() }); // Object with typed properties
+v.optional(v.string()); // String or undefined
 
 // Union validators (enum-like)
-v.union(
-  v.literal("PENDING"),
-  v.literal("CONFIRMED"),
-  v.literal("FULFILLED")
-)
+v.union(v.literal("PENDING"), v.literal("CONFIRMED"), v.literal("FULFILLED"));
 
 // ID references
-v.id("orders")                // Reference to document in "orders" table
+v.id("orders"); // Reference to document in "orders" table
 ```
 
 ### Query and Mutation Patterns
@@ -2455,7 +2463,7 @@ export const getBatch = query({
       .query("orderBatches")
       .withIndex("by_batchId", (q) => q.eq("batchId", args.batchId))
       .unique();
-  },
+  }
 });
 ```
 
@@ -2472,11 +2480,11 @@ export const updateStatus = mutation({
       .query("orderBatches")
       .withIndex("by_batchId", (q) => q.eq("batchId", args.batchId))
       .unique();
-    
+
     if (batch) {
       await ctx.db.patch(batch._id, { status: args.status });
     }
-  },
+  }
 });
 ```
 
@@ -2550,8 +2558,8 @@ npm install dedalus-labs
 ### Basic Usage Pattern
 
 ```typescript
-import Dedalus from 'dedalus-labs';
-import { DedalusRunner } from 'dedalus-labs';
+import Dedalus from "dedalus-labs";
+import { DedalusRunner } from "dedalus-labs";
 
 // Initialize client
 const client = new Dedalus({
@@ -2563,10 +2571,10 @@ const runner = new DedalusRunner(client);
 
 // Execute with MCP servers from Dedalus Marketplace and local tools
 const result = await runner.run({
-  input: 'Your prompt here',
-  model: 'openai/gpt-4o-mini',
+  input: "Your prompt here",
+  model: "openai/gpt-4o-mini",
   tools: [localFunction1, localFunction2],
-  mcpServers: ['vroom08/agentmail-mcp']  // Marketplace server reference format
+  mcpServers: ["vroom08/agentmail-mcp"] // Marketplace server reference format
 });
 
 console.log(result.finalOutput);
@@ -2579,10 +2587,10 @@ MCP servers from the Dedalus Labs Marketplace are referenced using the format `u
 ```typescript
 // Examples of marketplace MCP server references:
 mcpServers: [
-  'vroom08/agentmail-mcp',      // Email sending capabilities
-  'simon-liang/brave-search-mcp', // Web search
-  'windsor/ticketmaster-mcp'    // Event/ticket lookup
-]
+  "vroom08/agentmail-mcp", // Email sending capabilities
+  "simon-liang/brave-search-mcp", // Web search
+  "windsor/ticketmaster-mcp" // Event/ticket lookup
+];
 ```
 
 ### AgentMail MCP Server
@@ -2598,8 +2606,8 @@ The AgentMail MCP server (`vroom08/agentmail-mcp`) provides email functionality:
 const result = await runner.run({
   input: `Send an email to recipient@example.com with subject "🎅 Santa's Delivering Your Present!"
           and a festive HTML body announcing their gift delivery.`,
-  model: 'openai/gpt-4o-mini',
-  mcpServers: ['vroom08/agentmail-mcp']
+  model: "openai/gpt-4o-mini",
+  mcpServers: ["vroom08/agentmail-mcp"]
 });
 ```
 
@@ -2623,6 +2631,7 @@ For this hackathon, `openai/gpt-4o-mini` provides the best balance of speed and 
 The [Overpass API](https://wiki.openstreetmap.org/wiki/Overpass_API) is a read-only API that serves custom selected parts of OpenStreetMap data. It is optimized for data consumers that need elements selected by search criteria like location, type of objects, tag properties, and combinations thereof.
 
 **Key Characteristics:**
+
 - Free to use, no authentication required
 - Supports complex geospatial queries via Overpass QL
 - Returns data in JSON or XML format
@@ -2647,26 +2656,26 @@ out body geom;       // Output with geometry
 
 ### Relevant OSM Tags for Address Identification
 
-| Tag | Description | Example |
-|-----|-------------|---------|
-| `addr:housenumber` | House/building number | "123" |
-| `addr:street` | Street name | "Main Street" |
-| `addr:city` | City name | "San Francisco" |
-| `addr:state` | State/province | "CA" |
-| `addr:postcode` | Postal/ZIP code | "94102" |
-| `addr:full` | Complete address string | "123 Main St, SF, CA" |
-| `building` | Building type | "house", "apartments", "residential" |
-| `building:levels` | Number of floors | "2" |
+| Tag                | Description             | Example                              |
+| ------------------ | ----------------------- | ------------------------------------ |
+| `addr:housenumber` | House/building number   | "123"                                |
+| `addr:street`      | Street name             | "Main Street"                        |
+| `addr:city`        | City name               | "San Francisco"                      |
+| `addr:state`       | State/province          | "CA"                                 |
+| `addr:postcode`    | Postal/ZIP code         | "94102"                              |
+| `addr:full`        | Complete address string | "123 Main St, SF, CA"                |
+| `building`         | Building type           | "house", "apartments", "residential" |
+| `building:levels`  | Number of floors        | "2"                                  |
 
 ### Building Type Values for Household Inference
 
-| Value | Typical Household | Gift Strategy |
-|-------|-------------------|---------------|
-| `house` | Single family | Family-oriented gifts |
-| `detached` | Single family | Family-oriented gifts |
-| `apartments` | Mixed demographics | Varied gifts |
-| `residential` | General residential | Default strategy |
-| `terrace` | Row houses, families | Family-oriented gifts |
+| Value         | Typical Household    | Gift Strategy         |
+| ------------- | -------------------- | --------------------- |
+| `house`       | Single family        | Family-oriented gifts |
+| `detached`    | Single family        | Family-oriented gifts |
+| `apartments`  | Mixed demographics   | Varied gifts          |
+| `residential` | General residential  | Default strategy      |
+| `terrace`     | Row houses, families | Family-oriented gifts |
 
 ### Rate Limiting and Best Practices
 
@@ -2679,6 +2688,7 @@ out body geom;       // Output with geometry
 ### Alternative Endpoints
 
 If the primary endpoint is unavailable:
+
 - `https://overpass.kumi.systems/api/interpreter`
 - `https://overpass.openstreetmap.ru/api/interpreter`
 
@@ -2699,6 +2709,6 @@ This query retrieves all residential-type buildings and buildings with house num
 
 ---
 
-*Document prepared for Santa's Ho's HackNight @ Dedalus Labs Break In*  
-*Theme: Intercontinental Ballistic Gifts*  
-*December 14, 2025*
+_Document prepared for Santa's Ho's HackNight @ Dedalus Labs Break In_  
+_Theme: Intercontinental Ballistic Gifts_  
+_December 14, 2025_

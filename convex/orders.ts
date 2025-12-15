@@ -30,7 +30,7 @@ export const createOrder = mutation({
     pairingReason: v.optional(v.string()),
     recipientEmail: v.optional(v.string()),
     estimatedDeliveryStart: v.string(),
-    estimatedDeliveryEnd: v.string(),
+    estimatedDeliveryEnd: v.string()
   },
   handler: async (ctx, args) => {
     const orderDocId = await ctx.db.insert("orders", {
@@ -47,10 +47,10 @@ export const createOrder = mutation({
       recipientEmail: args.recipientEmail,
       emailSent: false,
       estimatedDeliveryStart: args.estimatedDeliveryStart,
-      estimatedDeliveryEnd: args.estimatedDeliveryEnd,
+      estimatedDeliveryEnd: args.estimatedDeliveryEnd
     });
     return orderDocId;
-  },
+  }
 });
 
 /**
@@ -74,9 +74,9 @@ export const createOrdersBatch = mutation({
         pairingReason: v.optional(v.string()),
         recipientEmail: v.optional(v.string()),
         estimatedDeliveryStart: v.string(),
-        estimatedDeliveryEnd: v.string(),
+        estimatedDeliveryEnd: v.string()
       })
-    ),
+    )
   },
   handler: async (ctx, args) => {
     const orderDocIds: string[] = [];
@@ -96,13 +96,13 @@ export const createOrdersBatch = mutation({
         recipientEmail: order.recipientEmail,
         emailSent: false,
         estimatedDeliveryStart: order.estimatedDeliveryStart,
-        estimatedDeliveryEnd: order.estimatedDeliveryEnd,
+        estimatedDeliveryEnd: order.estimatedDeliveryEnd
       });
       orderDocIds.push(docId);
     }
 
     return orderDocIds;
-  },
+  }
 });
 
 /**
@@ -118,7 +118,7 @@ export const getOrderByOrderId = query({
       .query("orders")
       .withIndex("by_orderId", (q) => q.eq("orderId", args.orderId))
       .unique();
-  },
+  }
 });
 
 /**
@@ -135,7 +135,7 @@ export const getOrdersByBatchId = query({
       .query("orders")
       .withIndex("by_batchId", (q) => q.eq("batchId", args.batchId))
       .collect();
-  },
+  }
 });
 
 /**
@@ -148,7 +148,7 @@ export const listOrders = query({
   args: {},
   handler: async (ctx) => {
     return await ctx.db.query("orders").order("desc").collect();
-  },
+  }
 });
 
 /**
@@ -165,7 +165,7 @@ export const getOrdersByStatus = query({
       v.literal("PENDING_FULFILLMENT"),
       v.literal("SHIPPED"),
       v.literal("DELIVERED")
-    ),
+    )
   },
   handler: async (ctx, args) => {
     return await ctx.db
@@ -173,7 +173,7 @@ export const getOrdersByStatus = query({
       .withIndex("by_status", (q) => q.eq("status", args.status))
       .order("desc")
       .collect();
-  },
+  }
 });
 
 /**
@@ -191,7 +191,7 @@ export const updateOrderStatus = mutation({
       v.literal("PENDING_FULFILLMENT"),
       v.literal("SHIPPED"),
       v.literal("DELIVERED")
-    ),
+    )
   },
   handler: async (ctx, args) => {
     const order = await ctx.db
@@ -204,7 +204,7 @@ export const updateOrderStatus = mutation({
     }
 
     await ctx.db.patch(order._id, { status: args.status });
-  },
+  }
 });
 
 /**
@@ -217,7 +217,7 @@ export const updateOrderStatus = mutation({
 export const updateOrderEmailStatus = mutation({
   args: {
     orderId: v.string(),
-    emailSent: v.boolean(),
+    emailSent: v.boolean()
   },
   handler: async (ctx, args) => {
     const order = await ctx.db
@@ -230,6 +230,5 @@ export const updateOrderEmailStatus = mutation({
     }
 
     await ctx.db.patch(order._id, { emailSent: args.emailSent });
-  },
+  }
 });
-

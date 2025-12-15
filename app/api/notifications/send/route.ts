@@ -1,13 +1,6 @@
 import { NextResponse } from "next/server";
-import {
-  sendDeliveryNotifications,
-  validateRecipients,
-} from "@/lib/agentmail";
-import type {
-  SendNotificationsRequest,
-  SendNotificationsResponse,
-  APIError,
-} from "@/lib/types";
+import { sendDeliveryNotifications, validateRecipients } from "@/lib/agentmail";
+import type { SendNotificationsRequest, SendNotificationsResponse, APIError } from "@/lib/types";
 
 /** Maximum recipients per request */
 const MAX_RECIPIENTS = 50;
@@ -30,7 +23,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
       const error: APIError = {
         code: "INVALID_RECIPIENTS",
-        message: "Request must contain a non-empty array of recipients",
+        message: "Request must contain a non-empty array of recipients"
       };
       return NextResponse.json(error, { status: 400 });
     }
@@ -39,36 +32,29 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (recipients.length > MAX_RECIPIENTS) {
       const error: APIError = {
         code: "TOO_MANY_RECIPIENTS",
-        message: `Maximum ${MAX_RECIPIENTS} recipients per request`,
+        message: `Maximum ${MAX_RECIPIENTS} recipients per request`
       };
       return NextResponse.json(error, { status: 400 });
     }
 
     // Validate recipient data structure
-    const invalidRecipients = recipients.filter(
-      (r) => !r.email || !r.name || !r.address
-    );
+    const invalidRecipients = recipients.filter((r) => !r.email || !r.name || !r.address);
     if (invalidRecipients.length > 0) {
       const error: APIError = {
         code: "INVALID_RECIPIENT_DATA",
-        message:
-          "Each recipient must have email, name, and address properties",
+        message: "Each recipient must have email, name, and address properties"
       };
       return NextResponse.json(error, { status: 400 });
     }
 
     // Validate email formats
-    const { valid: validRecipients, invalid: invalidEmails } =
-      validateRecipients(recipients);
+    const { valid: validRecipients, invalid: invalidEmails } = validateRecipients(recipients);
 
     // Send notifications to valid recipients
     let response: SendNotificationsResponse;
 
     if (validRecipients.length > 0) {
-      response = await sendDeliveryNotifications(
-        validRecipients,
-        estimatedDelivery
-      );
+      response = await sendDeliveryNotifications(validRecipients, estimatedDelivery);
 
       // Add invalid emails to failed results
       if (invalidEmails.length > 0) {
@@ -77,7 +63,7 @@ export async function POST(request: Request): Promise<NextResponse> {
           ...invalidEmails.map((email) => ({
             email,
             status: "failed" as const,
-            error: "Invalid email format",
+            error: "Invalid email format"
           }))
         );
       }
@@ -88,8 +74,8 @@ export async function POST(request: Request): Promise<NextResponse> {
         results: invalidEmails.map((email) => ({
           email,
           status: "failed" as const,
-          error: "Invalid email format",
-        })),
+          error: "Invalid email format"
+        }))
       };
     }
 
@@ -100,12 +86,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     const apiError: APIError = {
       code: "INTERNAL_ERROR",
       message: "Failed to send notification emails",
-      details:
-        process.env.NODE_ENV === "development"
-          ? { error: String(error) }
-          : undefined,
+      details: process.env.NODE_ENV === "development" ? { error: String(error) } : undefined
     };
     return NextResponse.json(apiError, { status: 500 });
   }
 }
-

@@ -7,7 +7,7 @@ import type { Product, Address, GiftPairing } from "./types";
  * Handles authentication and request signing automatically.
  */
 const client = new Dedalus({
-  apiKey: process.env.DEDALUS_API_KEY!,
+  apiKey: process.env.DEDALUS_API_KEY!
 });
 
 /**
@@ -34,8 +34,7 @@ const mockCatalog: Product[] = catalog as Product[];
 function searchProducts(category: string, ageRange?: string): Product[] {
   return mockCatalog.filter((product) => {
     const categoryMatch = product.category === category;
-    const ageMatch =
-      !ageRange || product.ageRange === ageRange || product.ageRange === "all";
+    const ageMatch = !ageRange || product.ageRange === ageRange || product.ageRange === "all";
     return categoryMatch && ageMatch;
   });
 }
@@ -100,20 +99,18 @@ function parseGiftPairings(output: string): GiftPairing[] {
   try {
     const parsed = JSON.parse(jsonMatch[0]);
     return parsed
-      .map(
-        (item: { addressId: string; asin: string; reason?: string }) => {
-          const product = mockCatalog.find((p) => p.asin === item.asin);
-          if (!product) {
-            console.warn(`Product not found: ${item.asin}`);
-            return null;
-          }
-          return {
-            addressId: item.addressId,
-            product,
-            pairingReason: item.reason,
-          };
+      .map((item: { addressId: string; asin: string; reason?: string }) => {
+        const product = mockCatalog.find((p) => p.asin === item.asin);
+        if (!product) {
+          console.warn(`Product not found: ${item.asin}`);
+          return null;
         }
-      )
+        return {
+          addressId: item.addressId,
+          product,
+          pairingReason: item.reason
+        };
+      })
       .filter(Boolean) as GiftPairing[];
   } catch (error) {
     console.error("Failed to parse gift pairings:", error);
@@ -128,9 +125,7 @@ function parseGiftPairings(output: string): GiftPairing[] {
  * @param addresses - Array of addresses with household metadata
  * @returns Promise resolving to AI-generated gift pairings
  */
-export async function pairGiftsWithAI(
-  addresses: Address[]
-): Promise<GiftPairing[]> {
+export async function pairGiftsWithAI(addresses: Address[]): Promise<GiftPairing[]> {
   const prompt = buildGiftPairingPrompt(addresses);
 
   try {
@@ -138,7 +133,7 @@ export async function pairGiftsWithAI(
       input: prompt,
       model: "openai/gpt-4o-mini",
       tools: [searchProducts],
-      mcpServers: ["vroom08/agentmail-mcp"],
+      mcpServers: ["vroom08/agentmail-mcp"]
     });
 
     return parseGiftPairings(result.finalOutput);
@@ -160,25 +155,19 @@ export function fallbackGiftPairing(address: Address): Product {
 
   // Prioritize children's gifts if children present
   if (metadata?.hasChildren) {
-    const childToy = mockCatalog.find(
-      (p) => p.category === "toys" && p.ageRange === "children"
-    );
+    const childToy = mockCatalog.find((p) => p.category === "toys" && p.ageRange === "children");
     if (childToy) return childToy;
   }
 
   // Senior-friendly gifts for elderly households
   if (metadata?.estimatedAge === "senior") {
-    const seniorGift = mockCatalog.find(
-      (p) => p.ageRange === "senior"
-    );
+    const seniorGift = mockCatalog.find((p) => p.ageRange === "senior");
     if (seniorGift) return seniorGift;
   }
 
   // Teen gifts for teen households
   if (metadata?.estimatedAge === "young") {
-    const teenGift = mockCatalog.find(
-      (p) => p.category === "electronics" && p.ageRange === "teen"
-    );
+    const teenGift = mockCatalog.find((p) => p.category === "electronics" && p.ageRange === "teen");
     if (teenGift) return teenGift;
   }
 
@@ -205,9 +194,7 @@ export function getAllProducts(): Product[] {
  * @param category - Product category to filter
  * @returns Array of products in the category
  */
-export function getProductsByCategory(
-  category: Product["category"]
-): Product[] {
+export function getProductsByCategory(category: Product["category"]): Product[] {
   return mockCatalog.filter((p) => p.category === category);
 }
 
@@ -222,4 +209,3 @@ export function getProductByAsin(asin: string): Product | undefined {
 }
 
 export { mockCatalog };
-

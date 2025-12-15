@@ -21,9 +21,7 @@ export function Header() {
         <Link href="/" className="flex items-center gap-2 font-bold">
           <span className="text-2xl">🎅</span>
           <span className="text-primary text-lg">ICBG</span>
-          <span className="text-xs text-muted-foreground hidden sm:inline">
-            Intercontinental Ballistic Gifts
-          </span>
+          <span className="text-xs text-muted-foreground hidden sm:inline">Intercontinental Ballistic Gifts</span>
         </Link>
 
         {/* Spacer */}
@@ -60,4 +58,3 @@ export function Header() {
     </header>
   );
 }
-

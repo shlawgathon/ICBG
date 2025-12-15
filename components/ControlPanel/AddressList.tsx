@@ -58,9 +58,7 @@ export function AddressList({ addresses, isLoading }: AddressListProps) {
           // Empty state
           <div className="text-center py-6">
             <Home className="w-8 h-8 mx-auto text-muted-foreground/50 mb-2" />
-            <p className="text-sm text-muted-foreground">
-              Select an area on the map to identify addresses
-            </p>
+            <p className="text-sm text-muted-foreground">Select an area on the map to identify addresses</p>
           </div>
         ) : (
           // Address list
@@ -72,32 +70,20 @@ export function AddressList({ addresses, isLoading }: AddressListProps) {
                     key={address.id}
                     className="p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
                   >
-                    <p className="font-medium text-sm leading-tight">
-                      {address.streetAddress || "Unknown Address"}
-                    </p>
+                    <p className="font-medium text-sm leading-tight">{address.streetAddress || "Unknown Address"}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {[address.city, address.state, address.postalCode]
-                        .filter(Boolean)
-                        .join(", ") || "Location pending"}
+                      {[address.city, address.state, address.postalCode].filter(Boolean).join(", ") ||
+                        "Location pending"}
                     </p>
 
                     {/* Household metadata badges */}
                     {address.metadata && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {address.metadata.householdType && (
-                          <Badge
-                            variant="outline"
-                            className="text-xs gap-1 py-0"
-                          >
-                            {address.metadata.householdType === "family" && (
-                              <Users className="w-3 h-3" />
-                            )}
-                            {address.metadata.householdType === "single" && (
-                              <User className="w-3 h-3" />
-                            )}
-                            {address.metadata.householdType === "elderly" && (
-                              <User className="w-3 h-3" />
-                            )}
+                          <Badge variant="outline" className="text-xs gap-1 py-0">
+                            {address.metadata.householdType === "family" && <Users className="w-3 h-3" />}
+                            {address.metadata.householdType === "single" && <User className="w-3 h-3" />}
+                            {address.metadata.householdType === "elderly" && <User className="w-3 h-3" />}
                             {address.metadata.householdType}
                           </Badge>
                         )}
@@ -123,13 +109,10 @@ export function AddressList({ addresses, isLoading }: AddressListProps) {
             </ScrollArea>
 
             {/* OSM attribution */}
-            <p className="text-xs text-muted-foreground mt-3 pt-3 border-t">
-              © OpenStreetMap contributors
-            </p>
+            <p className="text-xs text-muted-foreground mt-3 pt-3 border-t">© OpenStreetMap contributors</p>
           </>
         )}
       </CardContent>
     </Card>
   );
 }
-

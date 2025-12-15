@@ -18,7 +18,7 @@ const statusStyles: Record<OrderStatus | BatchStatus, string> = {
   PENDING: "bg-yellow-500/20 text-yellow-500 border-yellow-500/30",
   CONFIRMED: "bg-blue-500/20 text-blue-500 border-blue-500/30",
   EXPORTED: "bg-purple-500/20 text-purple-500 border-purple-500/30",
-  FULFILLED: "bg-green-500/20 text-green-500 border-green-500/30",
+  FULFILLED: "bg-green-500/20 text-green-500 border-green-500/30"
 };
 
 /**
@@ -43,14 +43,9 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
   return (
     <Badge
       variant="outline"
-      className={cn(
-        "font-mono text-xs uppercase tracking-wide",
-        statusStyles[status],
-        className
-      )}
+      className={cn("font-mono text-xs uppercase tracking-wide", statusStyles[status], className)}
     >
       {status.replace(/_/g, " ")}
     </Badge>
   );
 }
-

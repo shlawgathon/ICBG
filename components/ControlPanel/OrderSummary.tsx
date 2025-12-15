@@ -1,13 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -16,23 +10,15 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-  DialogClose,
+  DialogClose
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import {
-  ShoppingCart,
-  Download,
-  FileJson,
-  FileSpreadsheet,
-  Check,
-  Loader2,
-  Rocket,
-} from "lucide-react";
+import { ShoppingCart, Download, FileJson, FileSpreadsheet, Check, Loader2, Rocket } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 /**
@@ -71,7 +57,7 @@ export function OrderSummary({
   estimatedDelivery,
   onConfirmOrders,
   isOrdering,
-  confirmedBatchId,
+  confirmedBatchId
 }: OrderSummaryProps) {
   return (
     <Card className="border-primary/30">
@@ -89,9 +75,7 @@ export function OrderSummary({
             <p className="text-xs text-muted-foreground">Orders</p>
           </div>
           <div className="bg-muted/50 rounded-lg p-3 text-center">
-            <p className="text-2xl font-bold text-primary">
-              {formatCurrency(totalCost)}
-            </p>
+            <p className="text-2xl font-bold text-primary">{formatCurrency(totalCost)}</p>
             <p className="text-xs text-muted-foreground">Total Cost</p>
           </div>
         </div>
@@ -107,10 +91,7 @@ export function OrderSummary({
         {/* Confirm orders dialog */}
         <Dialog>
           <DialogTrigger asChild>
-            <Button
-              className="flex-1"
-              disabled={orderCount === 0 || isOrdering || !!confirmedBatchId}
-            >
+            <Button className="flex-1" disabled={orderCount === 0 || isOrdering || !!confirmedBatchId}>
               {isOrdering ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -137,13 +118,10 @@ export function OrderSummary({
               </DialogTitle>
               <DialogDescription className="pt-2 space-y-2">
                 <p>
-                  You are about to dispatch <strong>{orderCount} gifts</strong>{" "}
-                  totaling <strong>{formatCurrency(totalCost)}</strong>.
+                  You are about to dispatch <strong>{orderCount} gifts</strong> totaling{" "}
+                  <strong>{formatCurrency(totalCost)}</strong>.
                 </p>
-                <p>
-                  This action will create orders in Santa's database and prepare
-                  the gifts for delivery.
-                </p>
+                <p>This action will create orders in Santa&apos;s database and prepare the gifts for delivery.</p>
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -169,30 +147,19 @@ export function OrderSummary({
         {/* Export dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              disabled={!confirmedBatchId}
-              title="Export orders"
-            >
+            <Button variant="outline" size="icon" disabled={!confirmedBatchId} title="Export orders">
               <Download className="w-4 h-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <a
-                href={`/api/orders/export?batchId=${confirmedBatchId}&format=csv`}
-                download
-              >
+              <a href={`/api/orders/export?batchId=${confirmedBatchId}&format=csv`} download>
                 <FileSpreadsheet className="w-4 h-4 mr-2" />
                 Export CSV
               </a>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <a
-                href={`/api/orders/export?batchId=${confirmedBatchId}&format=json`}
-                download
-              >
+              <a href={`/api/orders/export?batchId=${confirmedBatchId}&format=json`} download>
                 <FileJson className="w-4 h-4 mr-2" />
                 Export JSON
               </a>
@@ -207,8 +174,7 @@ export function OrderSummary({
           <div className="flex items-center gap-2 text-green-500 text-sm bg-green-500/10 rounded-lg px-3 py-2">
             <Check className="w-4 h-4 shrink-0" />
             <span>
-              Batch created:{" "}
-              <code className="font-mono text-xs">{confirmedBatchId}</code>
+              Batch created: <code className="font-mono text-xs">{confirmedBatchId}</code>
             </span>
           </div>
         </div>
@@ -216,4 +182,3 @@ export function OrderSummary({
     </Card>
   );
 }
-

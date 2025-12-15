@@ -1,9 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  getAllProducts,
-  getProductsByCategory,
-  getProductByAsin,
-} from "@/lib/dedalus";
+import { getAllProducts, getProductsByCategory, getProductByAsin } from "@/lib/dedalus";
 import type { Product, APIError } from "@/lib/types";
 
 /**
@@ -31,7 +27,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       if (!product) {
         const error: APIError = {
           code: "PRODUCT_NOT_FOUND",
-          message: `Product not found: ${asin}`,
+          message: `Product not found: ${asin}`
         };
         return NextResponse.json(error, { status: 404 });
       }
@@ -44,7 +40,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       if (!validCategories.includes(category)) {
         const error: APIError = {
           code: "INVALID_CATEGORY",
-          message: `Invalid category. Valid options: ${validCategories.join(", ")}`,
+          message: `Invalid category. Valid options: ${validCategories.join(", ")}`
         };
         return NextResponse.json(error, { status: 400 });
       }
@@ -53,7 +49,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       return NextResponse.json({
         products,
         count: products.length,
-        category,
+        category
       });
     }
 
@@ -61,7 +57,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     const products = getAllProducts();
     return NextResponse.json({
       products,
-      count: products.length,
+      count: products.length
     });
   } catch (error) {
     console.error("Catalog error:", error);
@@ -69,12 +65,8 @@ export async function GET(request: Request): Promise<NextResponse> {
     const apiError: APIError = {
       code: "INTERNAL_ERROR",
       message: "Failed to retrieve catalog",
-      details:
-        process.env.NODE_ENV === "development"
-          ? { error: String(error) }
-          : undefined,
+      details: process.env.NODE_ENV === "development" ? { error: String(error) } : undefined
     };
     return NextResponse.json(apiError, { status: 500 });
   }
 }
-

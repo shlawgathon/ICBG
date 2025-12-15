@@ -1,11 +1,6 @@
 import * as turf from "@turf/turf";
 import type { Polygon } from "geojson";
-import type {
-  Address,
-  OverpassElement,
-  OverpassResponse,
-  HouseholdMetadata,
-} from "./types";
+import type { Address, OverpassElement, OverpassResponse, HouseholdMetadata } from "./types";
 
 /** Overpass API public endpoint */
 const OVERPASS_API_URL = "https://overpass-api.de/api/interpreter";
@@ -13,7 +8,7 @@ const OVERPASS_API_URL = "https://overpass-api.de/api/interpreter";
 /** Alternative endpoints for fallback */
 const OVERPASS_FALLBACK_URLS = [
   "https://overpass.kumi.systems/api/interpreter",
-  "https://overpass.openstreetmap.ru/api/interpreter",
+  "https://overpass.openstreetmap.ru/api/interpreter"
 ];
 
 /**
@@ -59,10 +54,7 @@ function buildOverpassQuery(polygon: Polygon): string {
  * @param tags - Full OSM tags object
  * @returns Inferred household metadata
  */
-function inferHouseholdMetadata(
-  buildingType: string | undefined,
-  tags: Record<string, string>
-): HouseholdMetadata {
+function inferHouseholdMetadata(buildingType: string | undefined, tags: Record<string, string>): HouseholdMetadata {
   const levels = parseInt(tags["building:levels"] ?? "1", 10);
 
   // Apartments suggest mixed demographics
@@ -70,7 +62,7 @@ function inferHouseholdMetadata(
     return {
       householdType: "family",
       hasChildren: Math.random() > 0.5,
-      estimatedAge: "middle",
+      estimatedAge: "middle"
     };
   }
 
@@ -79,19 +71,16 @@ function inferHouseholdMetadata(
     return {
       householdType: "family",
       hasChildren: true,
-      estimatedAge: "middle",
+      estimatedAge: "middle"
     };
   }
 
   // Senior housing indicated by tags
-  if (
-    tags["social_facility"] === "nursing_home" ||
-    tags["amenity"] === "retirement_home"
-  ) {
+  if (tags["social_facility"] === "nursing_home" || tags["amenity"] === "retirement_home") {
     return {
       householdType: "elderly",
       hasChildren: false,
-      estimatedAge: "senior",
+      estimatedAge: "senior"
     };
   }
 
@@ -99,7 +88,7 @@ function inferHouseholdMetadata(
   return {
     householdType: "family",
     hasChildren: Math.random() > 0.4,
-    estimatedAge: "middle",
+    estimatedAge: "middle"
   };
 }
 
@@ -116,14 +105,11 @@ function osmElementToAddress(element: OverpassElement): Address {
   // Compute centroid for ways (buildings)
   let lat: number, lng: number;
   if (element.type === "way" && element.geometry && element.geometry.length > 0) {
-    const coords = element.geometry.map(
-      (g) => [g.lon, g.lat] as [number, number]
-    );
+    const coords = element.geometry.map((g) => [g.lon, g.lat] as [number, number]);
     // Ensure the polygon is closed
     if (
       coords.length > 2 &&
-      (coords[0][0] !== coords[coords.length - 1][0] ||
-        coords[0][1] !== coords[coords.length - 1][1])
+      (coords[0][0] !== coords[coords.length - 1][0] || coords[0][1] !== coords[coords.length - 1][1])
     ) {
       coords.push(coords[0]);
     }
@@ -144,9 +130,7 @@ function osmElementToAddress(element: OverpassElement): Address {
   const houseNumber = tags["addr:housenumber"] ?? "";
   const street = tags["addr:street"] ?? "";
   const streetAddress =
-    houseNumber && street
-      ? `${houseNumber} ${street}`
-      : tags["addr:full"] ?? `Building ${element.id}`;
+    houseNumber && street ? `${houseNumber} ${street}` : (tags["addr:full"] ?? `Building ${element.id}`);
 
   // Infer household metadata from building tags
   const buildingType = tags["building"];
@@ -161,7 +145,7 @@ function osmElementToAddress(element: OverpassElement): Address {
     lat,
     lng,
     metadata,
-    osmRef: { type: element.type, id: element.id },
+    osmRef: { type: element.type, id: element.id }
   };
 }
 
@@ -174,10 +158,7 @@ function osmElementToAddress(element: OverpassElement): Address {
  * @returns Promise resolving to array of addresses within the polygon
  * @throws Error if Overpass API request fails
  */
-export async function identifyAddressesInPolygon(
-  polygon: Polygon,
-  limit: number = 50
-): Promise<Address[]> {
+export async function identifyAddressesInPolygon(polygon: Polygon, limit: number = 50): Promise<Address[]> {
   const query = buildOverpassQuery(polygon);
 
   let response: Response | undefined;
@@ -191,7 +172,7 @@ export async function identifyAddressesInPolygon(
       response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `data=${encodeURIComponent(query)}`,
+        body: `data=${encodeURIComponent(query)}`
       });
 
       if (response.ok) {
@@ -251,4 +232,3 @@ export function calculatePolygonArea(polygon: Polygon): number {
   const area = turf.area(polygon);
   return area / 1_000_000; // Convert from m² to km²
 }
-

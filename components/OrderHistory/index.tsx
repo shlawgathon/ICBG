@@ -75,8 +75,7 @@ export function OrderHistory() {
             <Clock className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" />
             <h3 className="text-lg font-medium mb-2">No Orders Yet</h3>
             <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-              Select an area on the globe, pair gifts, and confirm orders to
-              see them appear here.
+              Select an area on the globe, pair gifts, and confirm orders to see them appear here.
             </p>
           </div>
         ) : (
@@ -93,4 +92,3 @@ export function OrderHistory() {
     </Card>
   );
 }
-

@@ -17,17 +17,17 @@ ICBG is a full-stack application that combines an interactive 3D globe interface
 
 ## Tech Stack
 
-| Layer | Technology | Version |
-|-------|------------|---------|
-| Framework | Next.js | 16.0.10 |
-| Language | TypeScript | 5.7.x |
-| Runtime | Node.js | 22.x LTS |
-| Database | Convex | 1.17.x |
-| UI Components | shadcn/ui | latest |
-| Styling | Tailwind CSS | 4.x |
-| Mapping | Mapbox GL JS | 3.17.0 |
-| Geospatial | @turf/turf | 7.3.1 |
-| AI/MCP | dedalus-labs | 0.1.0-alpha.4 |
+| Layer         | Technology   | Version       |
+| ------------- | ------------ | ------------- |
+| Framework     | Next.js      | 16.0.10       |
+| Language      | TypeScript   | 5.7.x         |
+| Runtime       | Node.js      | 22.x LTS      |
+| Database      | Convex       | 1.17.x        |
+| UI Components | shadcn/ui    | latest        |
+| Styling       | Tailwind CSS | 4.x           |
+| Mapping       | Mapbox GL JS | 3.17.0        |
+| Geospatial    | @turf/turf   | 7.3.1         |
+| AI/MCP        | dedalus-labs | 0.1.0-alpha.4 |
 
 ## Getting Started
 
@@ -75,6 +75,7 @@ npx convex dev
 ```
 
 This will:
+
 - Create a new Convex project
 - Deploy the schema and functions
 - Populate `NEXT_PUBLIC_CONVEX_URL` in `.env.local`
@@ -134,13 +135,13 @@ icbg/
 
 ### API Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/addresses/identify` | POST | Identify addresses in polygon |
-| `/api/gifts/pair` | POST | Pair gifts with addresses |
-| `/api/notifications/send` | POST | Send delivery emails |
-| `/api/orders/export` | GET | Export orders as CSV/JSON |
-| `/api/catalog` | GET | Browse product catalog |
+| Endpoint                  | Method | Description                   |
+| ------------------------- | ------ | ----------------------------- |
+| `/api/addresses/identify` | POST   | Identify addresses in polygon |
+| `/api/gifts/pair`         | POST   | Pair gifts with addresses     |
+| `/api/notifications/send` | POST   | Send delivery emails          |
+| `/api/orders/export`      | GET    | Export orders as CSV/JSON     |
+| `/api/catalog`            | GET    | Browse product catalog        |
 
 ## Development
 

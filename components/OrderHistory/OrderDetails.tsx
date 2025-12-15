@@ -47,7 +47,7 @@ export function OrderDetails({ order }: OrderDetailsProps) {
   let address = {
     streetAddress: "",
     city: "",
-    state: "",
+    state: ""
   };
   try {
     address = JSON.parse(order.shippingAddress);
@@ -59,9 +59,7 @@ export function OrderDetails({ order }: OrderDetailsProps) {
     <div className="p-3 rounded-lg bg-muted/30 border space-y-2">
       {/* Order ID and status */}
       <div className="flex items-center justify-between">
-        <code className="text-xs font-mono text-muted-foreground">
-          {order.orderId}
-        </code>
+        <code className="text-xs font-mono text-muted-foreground">{order.orderId}</code>
         <StatusBadge status={order.status} />
       </div>
 
@@ -70,9 +68,7 @@ export function OrderDetails({ order }: OrderDetailsProps) {
         <Gift className="w-4 h-4 text-primary shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{order.productName}</p>
-          <p className="text-xs text-muted-foreground">
-            {formatCurrency(order.productPrice)}
-          </p>
+          <p className="text-xs text-muted-foreground">{formatCurrency(order.productPrice)}</p>
         </div>
       </div>
 
@@ -80,12 +76,8 @@ export function OrderDetails({ order }: OrderDetailsProps) {
       <div className="flex items-start gap-2">
         <MapPin className="w-4 h-4 text-secondary shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
-          <p className="text-xs truncate">
-            {address.streetAddress || "Unknown Address"}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {[address.city, address.state].filter(Boolean).join(", ")}
-          </p>
+          <p className="text-xs truncate">{address.streetAddress || "Unknown Address"}</p>
+          <p className="text-xs text-muted-foreground">{[address.city, address.state].filter(Boolean).join(", ")}</p>
         </div>
       </div>
 
@@ -93,9 +85,7 @@ export function OrderDetails({ order }: OrderDetailsProps) {
       {order.recipientEmail && (
         <div className="flex items-center gap-2 pt-1">
           <Mail className="w-3 h-3 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground truncate">
-            {order.recipientEmail}
-          </span>
+          <span className="text-xs text-muted-foreground truncate">{order.recipientEmail}</span>
           {order.emailSent && (
             <Badge variant="secondary" className="text-xs py-0 px-1">
               Sent
@@ -106,11 +96,8 @@ export function OrderDetails({ order }: OrderDetailsProps) {
 
       {/* Pairing reason if available */}
       {order.pairingReason && (
-        <p className="text-xs text-muted-foreground italic border-t pt-2 mt-2">
-          "{order.pairingReason}"
-        </p>
+        <p className="text-xs text-muted-foreground italic border-t pt-2 mt-2">&quot;{order.pairingReason}&quot;</p>
       )}
     </div>
   );
 }
-

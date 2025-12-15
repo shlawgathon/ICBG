@@ -2,11 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import Map, { MapRef, NavigationControl, ViewState } from "react-map-gl";
-import {
-  MAPBOX_TOKEN,
-  mapConfig,
-  initialViewState,
-} from "@/lib/mapbox";
+import { MAPBOX_TOKEN, mapConfig, initialViewState } from "@/lib/mapbox";
 import { DrawControl } from "./DrawControl";
 import { AddressMarkers } from "./AddressMarkers";
 import { DeliveryLines } from "./DeliveryLines";
@@ -57,7 +53,7 @@ export function GlobeMap({
   onSelectionClear,
   showDeliveryLines = false,
   isDrawing,
-  onDrawingToggle,
+  onDrawingToggle
 }: GlobeMapProps) {
   const mapRef = useRef<MapRef | null>(null);
   const [viewState, setViewState] = useState<ViewState>(initialViewState);
@@ -86,7 +82,7 @@ export function GlobeMap({
     mapRef.current?.flyTo({
       center: [lng, lat],
       zoom,
-      duration: 2000,
+      duration: 2000
     });
   }, []);
 
@@ -114,10 +110,7 @@ export function GlobeMap({
         />
 
         {/* Address markers */}
-        <AddressMarkers
-          addresses={addresses}
-          onMarkerClick={(address) => flyTo(address.lng, address.lat)}
-        />
+        <AddressMarkers addresses={addresses} onMarkerClick={(address) => flyTo(address.lng, address.lat)} />
 
         {/* Animated delivery lines */}
         {showDeliveryLines && <DeliveryLines addresses={addresses} />}
@@ -130,4 +123,3 @@ export function GlobeMap({
     </div>
   );
 }
-

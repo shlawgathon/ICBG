@@ -8,7 +8,6 @@ import { GiftPairing } from "./GiftPairing";
 import { NotificationStatus } from "./NotificationStatus";
 import { OrderSummary } from "./OrderSummary";
 import type { Address, GiftPairing as GiftPairingType } from "@/lib/types";
-import type { Polygon } from "geojson";
 
 /**
  * Props for the ControlPanel component.
@@ -89,7 +88,7 @@ export function ControlPanel({
   onConfirmOrders,
   isCreatingOrders,
   confirmedBatchId,
-  estimatedDelivery,
+  estimatedDelivery
 }: ControlPanelProps) {
   // Calculate order summary data
   const orderCount = pairings.length;
@@ -102,13 +101,9 @@ export function ControlPanel({
         <h1 className="text-xl font-bold flex items-center gap-2">
           <span>🎅</span>
           <span className="text-primary">ICBG</span>
-          <span className="text-muted-foreground font-normal text-sm">
-            Control
-          </span>
+          <span className="text-muted-foreground font-normal text-sm">Control</span>
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Santa's Logistics Operations Dashboard
-        </p>
+        <p className="text-sm text-muted-foreground mt-1">Santa&apos;s Logistics Operations Dashboard</p>
       </div>
 
       {/* Scrollable content */}
@@ -125,10 +120,7 @@ export function ControlPanel({
           <Separator />
 
           {/* Step 2: Address List */}
-          <AddressList
-            addresses={addresses}
-            isLoading={isLoadingAddresses}
-          />
+          <AddressList addresses={addresses} isLoading={isLoadingAddresses} />
 
           <Separator />
 
@@ -169,4 +161,3 @@ export function ControlPanel({
     </aside>
   );
 }
-

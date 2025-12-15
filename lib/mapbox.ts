@@ -28,8 +28,8 @@ export const mapConfig = {
     /** Background space color */
     "space-color": "rgb(11, 11, 25)",
     /** Star intensity in space background */
-    "star-intensity": 0.6,
-  },
+    "star-intensity": 0.6
+  }
 };
 
 /**
@@ -46,7 +46,7 @@ export const initialViewState = {
   /** Camera pitch (0 = looking straight down) */
   pitch: 0,
   /** Camera bearing (0 = north up) */
-  bearing: 0,
+  bearing: 0
 };
 
 /**
@@ -58,35 +58,27 @@ export const drawStyles = [
   {
     id: "gl-draw-polygon-fill",
     type: "fill" as const,
-    filter: [
-      "all",
-      ["==", "$type", "Polygon"],
-      ["!=", "mode", "static"],
-    ],
+    filter: ["all", ["==", "$type", "Polygon"], ["!=", "mode", "static"]],
     paint: {
       "fill-color": "#c41e3a",
       "fill-outline-color": "#c41e3a",
-      "fill-opacity": 0.2,
-    },
+      "fill-opacity": 0.2
+    }
   },
   // Polygon outline
   {
     id: "gl-draw-polygon-stroke-active",
     type: "line" as const,
-    filter: [
-      "all",
-      ["==", "$type", "Polygon"],
-      ["!=", "mode", "static"],
-    ],
+    filter: ["all", ["==", "$type", "Polygon"], ["!=", "mode", "static"]],
     layout: {
       "line-cap": "round" as const,
-      "line-join": "round" as const,
+      "line-join": "round" as const
     },
     paint: {
       "line-color": "#228b22",
       "line-dasharray": [0.2, 2],
-      "line-width": 3,
-    },
+      "line-width": 3
+    }
   },
   // Polygon midpoints
   {
@@ -95,38 +87,28 @@ export const drawStyles = [
     filter: ["all", ["==", "$type", "Point"], ["==", "meta", "midpoint"]],
     paint: {
       "circle-radius": 4,
-      "circle-color": "#ffd700",
-    },
+      "circle-color": "#ffd700"
+    }
   },
   // Vertices
   {
     id: "gl-draw-point-point-stroke-active",
     type: "circle" as const,
-    filter: [
-      "all",
-      ["==", "$type", "Point"],
-      ["==", "meta", "vertex"],
-      ["!=", "mode", "static"],
-    ],
+    filter: ["all", ["==", "$type", "Point"], ["==", "meta", "vertex"], ["!=", "mode", "static"]],
     paint: {
       "circle-radius": 6,
-      "circle-color": "#ffffff",
-    },
+      "circle-color": "#ffffff"
+    }
   },
   {
     id: "gl-draw-point-active",
     type: "circle" as const,
-    filter: [
-      "all",
-      ["==", "$type", "Point"],
-      ["!=", "meta", "midpoint"],
-      ["!=", "mode", "static"],
-    ],
+    filter: ["all", ["==", "$type", "Point"], ["!=", "meta", "midpoint"], ["!=", "mode", "static"]],
     paint: {
       "circle-radius": 4,
-      "circle-color": "#c41e3a",
-    },
-  },
+      "circle-color": "#c41e3a"
+    }
+  }
 ];
 
 /**
@@ -138,7 +120,7 @@ export const deliveryLineConfig = {
   /** Line width */
   width: 2,
   /** Animation speed (ms per unit) */
-  animationSpeed: 100,
+  animationSpeed: 100
 };
 
 /**
@@ -150,7 +132,7 @@ export const markerConfig = {
   /** Marker size in pixels */
   size: 24,
   /** Anchor position */
-  anchor: "bottom" as const,
+  anchor: "bottom" as const
 };
 
 /**
@@ -159,7 +141,7 @@ export const markerConfig = {
  */
 export const NORTH_POLE = {
   latitude: 90,
-  longitude: 0,
+  longitude: 0
 };
 
 /**
@@ -189,4 +171,3 @@ export function createGreatCircleLine(
 
   return coordinates;
 }
-

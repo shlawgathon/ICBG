@@ -11,10 +11,6 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
  * @param props - Additional props passed to NextThemesProvider
  * @returns JSX element with theme context provider
  */
-export function ThemeProvider({
-  children,
-  ...props
-}: React.ComponentProps<typeof NextThemesProvider>) {
+export function ThemeProvider({ children, ...props }: React.ComponentProps<typeof NextThemesProvider>) {
   return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
 }
-

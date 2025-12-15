@@ -26,7 +26,7 @@ export default async function OrdersPage() {
               Order History
             </h1>
             <p className="text-muted-foreground">
-              View and manage all gift dispatch batches from Santa's operations
+              View and manage all gift dispatch batches from Santa&apos;s operations
             </p>
           </div>
 
@@ -38,4 +38,3 @@ export default async function OrdersPage() {
     </div>
   );
 }
-

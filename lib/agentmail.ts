@@ -5,7 +5,7 @@ import type { SendNotificationsResponse } from "./types";
  * Dedalus client instance for email notifications.
  */
 const client = new Dedalus({
-  apiKey: process.env.DEDALUS_API_KEY!,
+  apiKey: process.env.DEDALUS_API_KEY!
 });
 
 /**
@@ -101,11 +101,9 @@ function parseNotificationResults(output: string): SendNotificationsResponse {
     const parsed = JSON.parse(jsonMatch[0]);
     const results = parsed.results || [];
     return {
-      sent: results.filter((r: { status: string }) => r.status === "sent")
-        .length,
-      failed: results.filter((r: { status: string }) => r.status === "failed")
-        .length,
-      results,
+      sent: results.filter((r: { status: string }) => r.status === "sent").length,
+      failed: results.filter((r: { status: string }) => r.status === "failed").length,
+      results
     };
   } catch (error) {
     console.error("Failed to parse notification results:", error);
@@ -168,7 +166,7 @@ in JSON format:
     const result = await runner.run({
       input: prompt,
       model: "openai/gpt-4o-mini",
-      mcpServers: ["vroom08/agentmail-mcp"],
+      mcpServers: ["vroom08/agentmail-mcp"]
     });
 
     return parseNotificationResults(result.finalOutput);
@@ -180,8 +178,8 @@ in JSON format:
       results: recipients.map((r) => ({
         email: r.email,
         status: "failed" as const,
-        error: "MCP server unavailable",
-      })),
+        error: "MCP server unavailable"
+      }))
     };
   }
 }
@@ -203,9 +201,7 @@ export function isValidEmail(email: string): boolean {
  * @param recipients - Array of recipients to validate
  * @returns Object with valid recipients and invalid emails
  */
-export function validateRecipients(
-  recipients: Array<{ email: string; name: string; address: string }>
-): {
+export function validateRecipients(recipients: Array<{ email: string; name: string; address: string }>): {
   valid: Array<{ email: string; name: string; address: string }>;
   invalid: string[];
 } {
@@ -222,4 +218,3 @@ export function validateRecipients(
 
   return { valid, invalid };
 }
-

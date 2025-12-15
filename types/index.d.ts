@@ -32,11 +32,7 @@ declare module "react-map-gl" {
   }
 
   export interface MapRef {
-    flyTo: (options: {
-      center: [number, number];
-      zoom?: number;
-      duration?: number;
-    }) => void;
+    flyTo: (options: { center: [number, number]; zoom?: number; duration?: number }) => void;
     getMap: () => unknown;
   }
 
@@ -89,7 +85,7 @@ declare module "dedalus-labs" {
   export interface RunOptions {
     input: string;
     model?: string;
-    tools?: Function[];
+    tools?: ((...args: unknown[]) => unknown)[];
     mcpServers?: string[];
   }
 
@@ -107,4 +103,3 @@ declare module "dedalus-labs" {
     run(options: RunOptions): Promise<RunResult>;
   }
 }
-

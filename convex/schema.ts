@@ -15,12 +15,7 @@ export default defineSchema({
     /** Unique batch identifier with BATCH- prefix */
     batchId: v.string(),
     /** Current batch status in the fulfillment pipeline */
-    status: v.union(
-      v.literal("PENDING"),
-      v.literal("CONFIRMED"),
-      v.literal("EXPORTED"),
-      v.literal("FULFILLED")
-    ),
+    status: v.union(v.literal("PENDING"), v.literal("CONFIRMED"), v.literal("EXPORTED"), v.literal("FULFILLED")),
     /** Total cost of all orders in the batch (USD) */
     totalCost: v.number(),
     /** Number of orders in this batch */
@@ -32,7 +27,7 @@ export default defineSchema({
     /** Estimated delivery window end date (ISO string) */
     estimatedDeliveryEnd: v.string(),
     /** Optional notes or metadata for the batch */
-    notes: v.optional(v.string()),
+    notes: v.optional(v.string())
   })
     .index("by_batchId", ["batchId"])
     .index("by_status", ["status"]),
@@ -74,7 +69,7 @@ export default defineSchema({
     /** Estimated delivery start date (ISO string) */
     estimatedDeliveryStart: v.string(),
     /** Estimated delivery end date (ISO string) */
-    estimatedDeliveryEnd: v.string(),
+    estimatedDeliveryEnd: v.string()
   })
     .index("by_orderId", ["orderId"])
     .index("by_batchId", ["batchId"])
@@ -96,9 +91,8 @@ export default defineSchema({
     /** Reference to batch created from this selection (optional) */
     batchId: v.optional(v.string()),
     /** Human-readable location description (e.g., "Castro District, SF") */
-    locationDescription: v.optional(v.string()),
+    locationDescription: v.optional(v.string())
   })
     .index("by_selectionId", ["selectionId"])
-    .index("by_batchId", ["batchId"]),
+    .index("by_batchId", ["batchId"])
 });
-
