@@ -4,10 +4,10 @@ import type { Address } from "@/lib/types";
 
 /**
  * POST /api/orders/purchase
- * 
+ *
  * Purchase products using the dw820/shopping-agent-mcp MCP server.
  * Supports both single address and batch address purchases.
- * 
+ *
  * Request body for single purchase:
  * {
  *   "address": "123 Main St",
@@ -16,7 +16,7 @@ import type { Address } from "@/lib/types";
  *   "zipCode": "94102",
  *   "unit": "Unit 1113" (optional)
  * }
- * 
+ *
  * Request body for batch purchase:
  * {
  *   "addresses": [Address, Address, ...]
@@ -31,10 +31,7 @@ export async function POST(request: NextRequest) {
       const addresses: Address[] = body.addresses;
 
       if (addresses.length === 0) {
-        return NextResponse.json(
-          { error: "No addresses provided" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "No addresses provided" }, { status: 400 });
       }
 
       const results = await purchaseProductsBatch(addresses);
@@ -55,10 +52,7 @@ export async function POST(request: NextRequest) {
     const { address, city, state, zipCode, unit } = body;
 
     if (!address || !city || !state || !zipCode) {
-      return NextResponse.json(
-        { error: "Missing required fields: address, city, state, zipCode" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields: address, city, state, zipCode" }, { status: 400 });
     }
 
     const result = await purchaseProduct(address, city, state, zipCode, unit);
@@ -67,9 +61,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Purchase API error:", error);
     return NextResponse.json(
-      { 
-        error: "Purchase failed", 
-        details: error instanceof Error ? error.message : String(error) 
+      {
+        error: "Purchase failed",
+        details: error instanceof Error ? error.message : String(error)
       },
       { status: 500 }
     );

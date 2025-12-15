@@ -303,7 +303,7 @@ export default function HomePage() {
       const allRecipients = [...demoRecipients, ...syntheticRecipients];
 
       // Split recipients into batches of NOTIFICATION_BATCH_SIZE to comply with API limits
-      const batches: typeof allRecipients[] = [];
+      const batches: (typeof allRecipients)[] = [];
       for (let i = 0; i < allRecipients.length; i += NOTIFICATION_BATCH_SIZE) {
         batches.push(allRecipients.slice(i, i + NOTIFICATION_BATCH_SIZE));
       }

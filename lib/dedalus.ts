@@ -296,12 +296,7 @@ export async function purchaseProductsBatch(
   const results: { addressId: string; result: PurchaseResponse }[] = [];
 
   for (const addr of addresses) {
-    const result = await purchaseProduct(
-      addr.streetAddress,
-      addr.city,
-      addr.state,
-      addr.postalCode
-    );
+    const result = await purchaseProduct(addr.streetAddress, addr.city, addr.state, addr.postalCode);
 
     results.push({
       addressId: addr.id,
