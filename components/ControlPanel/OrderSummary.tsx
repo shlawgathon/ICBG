@@ -186,9 +186,9 @@ export function OrderSummary({
         {onBuyProducts && (
           <Dialog>
             <DialogTrigger asChild>
-              <Button 
-                variant="secondary" 
-                className="w-full bg-green-600 hover:bg-green-700 text-white" 
+              <Button
+                variant="secondary"
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
                 disabled={orderCount === 0 || isBuying || !!purchaseResult?.success}
               >
                 {isBuying ? (
@@ -217,15 +217,12 @@ export function OrderSummary({
                 </DialogTitle>
                 <DialogDescription className="pt-2 space-y-2">
                   <p>
-                    You are about to purchase <strong>protein bars</strong> for{" "}
-                    <strong>{orderCount} addresses</strong>.
+                    You are about to purchase <strong>protein bars</strong> for <strong>{orderCount} addresses</strong>.
                   </p>
                   <p className="text-yellow-600 dark:text-yellow-400">
                     ⚠️ This will make REAL purchases using the shopping agent.
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    Recipient: Wei Tu
-                  </p>
+                  <p className="text-sm text-muted-foreground">Recipient: Wei Tu</p>
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
@@ -233,11 +230,7 @@ export function OrderSummary({
                   <Button variant="outline">Cancel</Button>
                 </DialogClose>
                 <DialogClose asChild>
-                  <Button 
-                    onClick={onBuyProducts} 
-                    disabled={isBuying}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
+                  <Button onClick={onBuyProducts} disabled={isBuying} className="bg-green-600 hover:bg-green-700">
                     {isBuying ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -269,11 +262,11 @@ export function OrderSummary({
       {/* Purchase result message */}
       {purchaseResult && (
         <div className="px-6 pb-4">
-          <div className={`flex items-center gap-2 text-sm rounded-lg px-3 py-2 ${
-            purchaseResult.success 
-              ? "text-green-500 bg-green-500/10" 
-              : "text-yellow-500 bg-yellow-500/10"
-          }`}>
+          <div
+            className={`flex items-center gap-2 text-sm rounded-lg px-3 py-2 ${
+              purchaseResult.success ? "text-green-500 bg-green-500/10" : "text-yellow-500 bg-yellow-500/10"
+            }`}
+          >
             <Check className="w-4 h-4 shrink-0" />
             <span>
               {purchaseResult.successCount} purchased, {purchaseResult.failedCount} failed
@@ -284,4 +277,3 @@ export function OrderSummary({
     </Card>
   );
 }
-

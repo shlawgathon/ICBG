@@ -83,7 +83,9 @@ export default function HomePage() {
 
   // Purchase state
   const [isBuying, setIsBuying] = useState(false);
-  const [purchaseResult, setPurchaseResult] = useState<{ success: boolean; successCount: number; failedCount: number } | undefined>();
+  const [purchaseResult, setPurchaseResult] = useState<
+    { success: boolean; successCount: number; failedCount: number } | undefined
+  >();
 
   // Convex queries and mutations
   const giftedAddressIdsRaw = useQuery(api.orders.getAllGiftedAddressIds);

@@ -1,6 +1,6 @@
 import Dedalus, { DedalusRunner } from "dedalus-labs";
 import catalog from "@/data/catalog.json";
-import type { Product, Address, GiftPairing, PurchaseRequest, PurchaseResponse } from "./types";
+import type { Product, Address, GiftPairing, PurchaseResponse } from "./types";
 
 /**
  * Dedalus client instance for the ICBG application.
