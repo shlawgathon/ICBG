@@ -98,6 +98,8 @@ export function GlobeMap({
         fog={mapConfig.fog}
         reuseMaps
         attributionControl={false}
+        dragPan={!isDrawing}
+        doubleClickZoom={!isDrawing}
       >
         <NavigationControl position="top-right" />
 

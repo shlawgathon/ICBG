@@ -86,6 +86,18 @@ export function AreaSelection({ isDrawing, onStartDraw, onClearSelection, polygo
             Click &quot;Select Area&quot; then draw a polygon on the map
           </p>
         )}
+
+        {/* Keyboard shortcuts hint */}
+        <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono border border-border">D</kbd>
+            <span>Toggle draw</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono border border-border">Esc</kbd>
+            <span>Cancel</span>
+          </span>
+        </div>
       </CardContent>
     </Card>
   );
