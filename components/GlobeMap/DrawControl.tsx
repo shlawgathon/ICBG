@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useLayoutEffect } from "react";
-import { useControl } from "react-map-gl";
+import { useControl } from "react-map-gl/mapbox";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import { drawStyles } from "@/lib/mapbox";
 import type { Polygon } from "geojson";

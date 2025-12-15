@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
-import { Source, Layer } from "react-map-gl";
+import { Source, Layer } from "react-map-gl/mapbox";
 import * as turf from "@turf/turf";
 import { NORTH_POLE, deliveryLineConfig } from "@/lib/mapbox";
 import type { Address } from "@/lib/types";

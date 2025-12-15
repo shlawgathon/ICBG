@@ -46,7 +46,9 @@ export const initialViewState = {
   /** Camera pitch (0 = looking straight down) */
   pitch: 0,
   /** Camera bearing (0 = north up) */
-  bearing: 0
+  bearing: 0,
+  /** Map padding (required by react-map-gl v8.x ViewState) */
+  padding: { top: 0, bottom: 0, left: 0, right: 0 }
 };
 
 /**

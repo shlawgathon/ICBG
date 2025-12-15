@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import Map, { MapRef, NavigationControl, ViewState } from "react-map-gl";
+import Map, { MapRef, NavigationControl, ViewState } from "react-map-gl/mapbox";
 import { MAPBOX_TOKEN, mapConfig, initialViewState } from "@/lib/mapbox";
 import { DrawControl } from "./DrawControl";
 import { AddressMarkers } from "./AddressMarkers";

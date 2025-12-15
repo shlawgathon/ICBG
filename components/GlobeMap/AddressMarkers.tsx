@@ -1,6 +1,6 @@
 "use client";
 
-import { Marker } from "react-map-gl";
+import { Marker } from "react-map-gl/mapbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Home, Users, Baby } from "lucide-react";

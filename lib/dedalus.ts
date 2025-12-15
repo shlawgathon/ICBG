@@ -31,13 +31,16 @@ const mockCatalog: Product[] = catalog as Product[];
  * @param ageRange - Target age range ('children', 'teen', 'adult', 'senior', 'all')
  * @returns Array of products matching the criteria
  */
-function searchProducts(category: string, ageRange?: string): Product[] {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const searchProducts = (category: any, ageRange?: any): Product[] => {
+  const categoryStr = String(category);
+  const ageRangeStr = ageRange ? String(ageRange) : undefined;
   return mockCatalog.filter((product) => {
-    const categoryMatch = product.category === category;
-    const ageMatch = !ageRange || product.ageRange === ageRange || product.ageRange === "all";
+    const categoryMatch = product.category === categoryStr;
+    const ageMatch = !ageRangeStr || product.ageRange === ageRangeStr || product.ageRange === "all";
     return categoryMatch && ageMatch;
   });
-}
+};
 
 /**
  * Builds the gift pairing prompt for the AI agent.
