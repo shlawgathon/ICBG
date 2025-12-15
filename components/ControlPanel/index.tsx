@@ -95,7 +95,7 @@ export function ControlPanel({
   const totalCost = pairings.reduce((sum, p) => sum + p.product.price, 0);
 
   return (
-    <aside className="w-[400px] h-screen border-l border-border bg-card flex flex-col">
+    <aside className="w-[400px] h-screen border-l border-border bg-card flex flex-col overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-border shrink-0">
         <h1 className="text-xl font-bold flex items-center gap-2">
@@ -107,7 +107,7 @@ export function ControlPanel({
       </div>
 
       {/* Scrollable content */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1" type="always">
         <div className="p-4 space-y-6">
           {/* Step 1: Area Selection */}
           <AreaSelection
