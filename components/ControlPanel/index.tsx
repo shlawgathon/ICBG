@@ -107,7 +107,7 @@ export function ControlPanel({
       </div>
 
       {/* Scrollable content */}
-      <ScrollArea className="flex-1" type="always">
+      <ScrollArea className="flex-1 min-h-0" type="always">
         <div className="p-4 space-y-6">
           {/* Step 1: Area Selection */}
           <AreaSelection

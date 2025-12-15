@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Home, Users, Baby, User } from "lucide-react";
@@ -61,52 +60,50 @@ export function AddressList({ addresses, isLoading }: AddressListProps) {
             <p className="text-sm text-muted-foreground">Select an area on the map to identify addresses</p>
           </div>
         ) : (
-          // Address list
+          // Address list - no fixed height, parent ScrollArea handles scrolling
           <>
-            <ScrollArea className="h-[200px] pr-4">
-              <div className="space-y-2">
-                {addresses.map((address) => (
-                  <div
-                    key={address.id}
-                    className="p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
-                  >
-                    <p className="font-medium text-sm leading-tight">{address.streetAddress || "Unknown Address"}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {[address.city, address.state, address.postalCode].filter(Boolean).join(", ") ||
-                        "Location pending"}
-                    </p>
+            <div className="space-y-2">
+              {addresses.map((address) => (
+                <div
+                  key={address.id}
+                  className="p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                >
+                  <p className="font-medium text-sm leading-tight">{address.streetAddress || "Unknown Address"}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {[address.city, address.state, address.postalCode].filter(Boolean).join(", ") ||
+                      "Location pending"}
+                  </p>
 
-                    {/* Household metadata badges */}
-                    {address.metadata && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {address.metadata.householdType && (
-                          <Badge variant="outline" className="text-xs gap-1 py-0">
-                            {address.metadata.householdType === "family" && <Users className="w-3 h-3" />}
-                            {address.metadata.householdType === "single" && <User className="w-3 h-3" />}
-                            {address.metadata.householdType === "elderly" && <User className="w-3 h-3" />}
-                            {address.metadata.householdType}
-                          </Badge>
-                        )}
-                        {address.metadata.hasChildren && (
-                          <Badge
-                            variant="outline"
-                            className="text-xs gap-1 py-0 border-accent/50 text-accent-foreground"
-                          >
-                            <Baby className="w-3 h-3" />
-                            Children
-                          </Badge>
-                        )}
-                        {address.metadata.estimatedAge && (
-                          <Badge variant="secondary" className="text-xs py-0">
-                            {address.metadata.estimatedAge}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
+                  {/* Household metadata badges */}
+                  {address.metadata && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {address.metadata.householdType && (
+                        <Badge variant="outline" className="text-xs gap-1 py-0">
+                          {address.metadata.householdType === "family" && <Users className="w-3 h-3" />}
+                          {address.metadata.householdType === "single" && <User className="w-3 h-3" />}
+                          {address.metadata.householdType === "elderly" && <User className="w-3 h-3" />}
+                          {address.metadata.householdType}
+                        </Badge>
+                      )}
+                      {address.metadata.hasChildren && (
+                        <Badge
+                          variant="outline"
+                          className="text-xs gap-1 py-0 border-accent/50 text-accent-foreground"
+                        >
+                          <Baby className="w-3 h-3" />
+                          Children
+                        </Badge>
+                      )}
+                      {address.metadata.estimatedAge && (
+                        <Badge variant="secondary" className="text-xs py-0">
+                          {address.metadata.estimatedAge}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
 
             {/* OSM attribution */}
             <p className="text-xs text-muted-foreground mt-3 pt-3 border-t">© OpenStreetMap contributors</p>

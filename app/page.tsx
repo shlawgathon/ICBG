@@ -13,6 +13,27 @@ import type { Address, GiftPairing } from "@/lib/types";
 import type { Polygon } from "geojson";
 
 /**
+ * Demo/test email configuration.
+ * This email is ALWAYS included in notification sends for demonstration purposes.
+ * Set to undefined or empty string to disable the demo recipient.
+ *
+ * @example
+ * // To enable demo notifications:
+ * const DEMO_EMAIL = "your-email@example.com";
+ *
+ * // To disable demo notifications:
+ * const DEMO_EMAIL = undefined;
+ */
+const DEMO_EMAIL_CONFIG = {
+  /** Email address to receive demo notifications (set to undefined to disable) */
+  email: "aritrasray@gmail.com",
+  /** Display name for the demo recipient */
+  name: "Demo Recipient",
+  /** Demo address shown in the notification email */
+  address: "123 North Pole Lane, Santa's Workshop, Arctic Circle"
+} as const;
+
+/**
  * Main application page for ICBG Mission Control.
  * Provides the globe interface for selecting delivery areas,
  * identifying addresses, pairing gifts, and creating orders.
@@ -95,11 +116,7 @@ export default function HomePage() {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Ignore hotkeys when typing in input fields, textareas, or contenteditable elements
       const target = event.target as HTMLElement;
-      if (
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.isContentEditable
-      ) {
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
         return;
       }
 
@@ -215,6 +232,7 @@ export default function HomePage() {
 
   /**
    * Sends delivery notification emails.
+   * Always includes the demo email recipient (if configured) for demonstration purposes.
    */
   const handleSendNotifications = useCallback(async () => {
     if (pairings.length === 0) return;
@@ -222,8 +240,8 @@ export default function HomePage() {
     setIsSendingNotifications(true);
 
     try {
-      // Build recipients from pairings
-      const recipients = pairings.map((pairing) => {
+      // Build recipients from pairings (synthetic emails for identified addresses)
+      const syntheticRecipients = pairings.map((pairing) => {
         const address = addresses.find((a) => a.id === pairing.addressId);
         return {
           email: `resident@${address?.postalCode || "unknown"}.example.com`,
@@ -231,6 +249,18 @@ export default function HomePage() {
           address: address?.streetAddress || "Unknown Address"
         };
       });
+
+      // Always include demo email recipient if configured
+      const recipients = DEMO_EMAIL_CONFIG.email
+        ? [
+            {
+              email: DEMO_EMAIL_CONFIG.email,
+              name: DEMO_EMAIL_CONFIG.name,
+              address: DEMO_EMAIL_CONFIG.address
+            },
+            ...syntheticRecipients
+          ]
+        : syntheticRecipients;
 
       const response = await fetch("/api/notifications/send", {
         method: "POST",
@@ -248,7 +278,7 @@ export default function HomePage() {
       console.error("Notification send error:", error);
       setNotificationResults({
         sent: 0,
-        failed: pairings.length
+        failed: pairings.length + (DEMO_EMAIL_CONFIG.email ? 1 : 0)
       });
     } finally {
       setIsSendingNotifications(false);

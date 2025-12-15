@@ -165,7 +165,7 @@ in JSON format:
   try {
     const result = await runner.run({
       input: prompt,
-      model: "openai/gpt-4o-mini",
+      model: "xai/grok-4-fast-non-reasoning",
       mcpServers: ["vroom08/agentmail-mcp"]
     });
 

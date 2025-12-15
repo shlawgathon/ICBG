@@ -134,7 +134,7 @@ export async function pairGiftsWithAI(addresses: Address[]): Promise<GiftPairing
   try {
     const result = await runner.run({
       input: prompt,
-      model: "openai/gpt-4o-mini",
+      model: "xai/grok-4-fast-non-reasoning",
       tools: [searchProducts],
       mcpServers: ["vroom08/agentmail-mcp"]
     });
