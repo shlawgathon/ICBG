@@ -115,6 +115,10 @@ function parseNotificationResults(output: string): SendNotificationsResponse {
  * Sends festive delivery notification emails via AgentMail MCP server.
  * Each recipient receives a personalized email announcing their gift delivery.
  *
+ * The function instructs the AI agent to:
+ * 1. Create an inbox (if none exists) to send emails from
+ * 2. Use that inbox to send personalized festive notifications
+ *
  * @param recipients - Array of notification recipients with email and address info
  * @param estimatedDelivery - Expected delivery date string
  * @returns Promise resolving to send results for each recipient
@@ -128,10 +132,24 @@ export async function sendDeliveryNotifications(
   }
 
   const prompt = `
-You are Santa's notification coordinator. Send festive email notifications
-to the following recipients announcing their gift deliveries.
+You are Santa's notification coordinator. Your task is to send festive email notifications
+to recipients announcing their gift deliveries using the AgentMail tools.
 
-For each recipient, use the AgentMail tools to send an email with:
+IMPORTANT - FOLLOW THESE STEPS IN ORDER:
+
+STEP 1: GET OR CREATE AN INBOX
+First, you need an inbox to send emails from:
+a) Use list_inboxes to check if any inboxes already exist
+b) If an inbox exists, use it. If not, use create_inbox to create a new one
+   with a username like "santa-workshop" or "icbg-notifications"
+c) Note the inbox address - you'll need it to send emails
+
+This is REQUIRED before you can send any emails. DO NOT skip this step.
+
+STEP 2: SEND EMAILS
+Using the inbox from Step 1, send an email to EACH of these ${recipients.length} recipients.
+Use the send_email tool with:
+- From: The inbox address from Step 1
 - To: The recipient's email address
 - Subject: "🎅 Santa's Delivering Your Present!"
 - Body: A warm, HTML-formatted festive message including:
@@ -152,14 +170,17 @@ ${recipients
   )
   .join("\n")}
 
-After sending all emails, report back the status of each send operation
-in JSON format:
+STEP 3: REPORT RESULTS
+After attempting to send ALL ${recipients.length} emails, report back the status of each
+send operation in this exact JSON format:
 {
   "results": [
     { "email": "user@example.com", "status": "sent" },
     { "email": "other@example.com", "status": "failed", "error": "reason" }
   ]
 }
+
+Make sure to include a result entry for EVERY recipient (${recipients.length} total).
 `.trim();
 
   try {
