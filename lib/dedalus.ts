@@ -1,6 +1,6 @@
 import Dedalus, { DedalusRunner } from "dedalus-labs";
 import catalog from "@/data/catalog.json";
-import type { Product, Address, GiftPairing } from "./types";
+import type { Product, Address, GiftPairing, PurchaseRequest, PurchaseResponse } from "./types";
 
 /**
  * Dedalus client instance for the ICBG application.
@@ -209,6 +209,110 @@ export function getProductsByCategory(category: Product["category"]): Product[] 
  */
 export function getProductByAsin(asin: string): Product | undefined {
   return mockCatalog.find((p) => p.asin === asin);
+}
+
+/**
+ * Hardcoded values for purchases as per requirements.
+ * Product name and recipient name are always the same.
+ */
+const PURCHASE_DEFAULTS = {
+  productName: "protein bars",
+  firstName: "Wei",
+  lastName: "Tu"
+} as const;
+
+/**
+ * Purchases a product using the dw820/shopping-agent-mcp MCP server.
+ * Uses hardcoded product name and recipient name, with dynamic address.
+ *
+ * @param address - Shipping address from selected map location
+ * @param unit - Optional unit/apartment number
+ * @returns Promise resolving to purchase response
+ */
+export async function purchaseProduct(
+  address: string,
+  city: string,
+  state: string,
+  zipCode: string,
+  unit?: string
+): Promise<PurchaseResponse> {
+  const fullAddress = unit ? `${address}, ${unit}` : address;
+
+  const prompt = `
+Purchase the following product and ship it to the specified address:
+
+Product: ${PURCHASE_DEFAULTS.productName}
+
+Shipping Information:
+- First Name: ${PURCHASE_DEFAULTS.firstName}
+- Last Name: ${PURCHASE_DEFAULTS.lastName}
+- Address: ${fullAddress}
+- City: ${city}
+- State: ${state}
+- ZIP Code: ${zipCode}
+
+Please search for the product and complete the purchase. Return the order confirmation details.
+`.trim();
+
+  try {
+    const result = await runner.run({
+      input: prompt,
+      model: "xai/grok-4-fast-non-reasoning",
+      mcpServers: ["dw820/shopping-agent-mcp"]
+    });
+
+    const output = result.finalOutput;
+
+    // Parse the response to extract order information
+    const orderIdMatch = output.match(/order[_\s-]?(?:id|number)?[:\s]+([A-Z0-9-]+)/i);
+    const orderId = orderIdMatch?.[1];
+
+    return {
+      success: true,
+      orderId,
+      message: "Purchase completed successfully",
+      rawResponse: output
+    };
+  } catch (error) {
+    console.error("Purchase failed:", error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Purchase failed",
+      rawResponse: String(error)
+    };
+  }
+}
+
+/**
+ * Purchases products for multiple addresses in batch.
+ * Uses hardcoded product name and recipient name for all purchases.
+ *
+ * @param addresses - Array of Address objects to purchase for
+ * @returns Promise resolving to array of purchase responses
+ */
+export async function purchaseProductsBatch(
+  addresses: Address[]
+): Promise<{ addressId: string; result: PurchaseResponse }[]> {
+  const results: { addressId: string; result: PurchaseResponse }[] = [];
+
+  for (const addr of addresses) {
+    const result = await purchaseProduct(
+      addr.streetAddress,
+      addr.city,
+      addr.state,
+      addr.postalCode
+    );
+
+    results.push({
+      addressId: addr.id,
+      result
+    });
+
+    // Small delay to avoid rate limiting
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+
+  return results;
 }
 
 export { mockCatalog };

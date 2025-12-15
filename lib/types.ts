@@ -227,3 +227,40 @@ export type OverpassResponse = {
   /** Array of OSM elements */
   elements: OverpassElement[];
 };
+
+/**
+ * Purchase request for the shopping agent MCP.
+ * Address fields come from selected addresses, name/product are hardcoded.
+ */
+export type PurchaseRequest = {
+  /** Product to search and purchase (hardcoded) */
+  productName: string;
+  /** Recipient first name (hardcoded) */
+  firstName: string;
+  /** Recipient last name (hardcoded) */
+  lastName: string;
+  /** Street address from selected address */
+  address: string;
+  /** Unit/apartment number (optional) */
+  unit?: string;
+  /** City from selected address */
+  city: string;
+  /** State from selected address */
+  state: string;
+  /** ZIP code from selected address */
+  zipCode: string;
+};
+
+/**
+ * Purchase response from the shopping agent MCP.
+ */
+export type PurchaseResponse = {
+  /** Whether the purchase was successful */
+  success: boolean;
+  /** Order/tracking ID if successful */
+  orderId?: string;
+  /** Status message */
+  message: string;
+  /** Raw response from the MCP server */
+  rawResponse?: string;
+};
