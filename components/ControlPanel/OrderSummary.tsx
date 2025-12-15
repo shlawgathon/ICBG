@@ -18,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { ShoppingCart, Download, FileJson, FileSpreadsheet, Check, Loader2, Rocket } from "lucide-react";
+import { ShoppingCart, Download, FileJson, FileSpreadsheet, Check, Loader2, Rocket, CreditCard } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 /**
@@ -37,11 +37,17 @@ type OrderSummaryProps = {
   isOrdering: boolean;
   /** Confirmed batch ID (after creation) */
   confirmedBatchId?: string;
+  /** Callback to buy products via MCP shopping agent */
+  onBuyProducts?: () => Promise<void>;
+  /** Whether purchase is in progress */
+  isBuying?: boolean;
+  /** Purchase result after completion */
+  purchaseResult?: { success: boolean; successCount: number; failedCount: number };
 };
 
 /**
  * OrderSummary displays batch totals and provides order confirmation.
- * Includes export options for created batches.
+ * Includes export options for created batches and Buy button for purchases.
  *
  * @param orderCount - Number of orders
  * @param totalCost - Total cost in USD
@@ -49,6 +55,9 @@ type OrderSummaryProps = {
  * @param onConfirmOrders - Confirm order creation
  * @param isOrdering - Whether creation is in progress
  * @param confirmedBatchId - Created batch ID
+ * @param onBuyProducts - Buy products via MCP
+ * @param isBuying - Whether purchase is in progress
+ * @param purchaseResult - Purchase result after completion
  * @returns Order summary card component
  */
 export function OrderSummary({
@@ -57,7 +66,10 @@ export function OrderSummary({
   estimatedDelivery,
   onConfirmOrders,
   isOrdering,
-  confirmedBatchId
+  confirmedBatchId,
+  onBuyProducts,
+  isBuying = false,
+  purchaseResult
 }: OrderSummaryProps) {
   return (
     <Card className="border-primary/30">
@@ -87,85 +99,159 @@ export function OrderSummary({
         </div>
       </CardContent>
 
-      <CardFooter className="flex gap-2 pt-0">
-        {/* Confirm orders dialog */}
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="flex-1" disabled={orderCount === 0 || isOrdering || !!confirmedBatchId}>
-              {isOrdering ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Creating...
-                </>
-              ) : confirmedBatchId ? (
-                <>
-                  <Check className="w-4 h-4 mr-2" />
-                  Confirmed
-                </>
-              ) : (
-                <>
-                  <Rocket className="w-4 h-4 mr-2" />
-                  🎅 Confirm Orders
-                </>
-              )}
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <span className="text-2xl">🎅</span>
-                Confirm Gift Dispatch
-              </DialogTitle>
-              <DialogDescription className="pt-2 space-y-2">
-                <p>
-                  You are about to dispatch <strong>{orderCount} gifts</strong> totaling{" "}
-                  <strong>{formatCurrency(totalCost)}</strong>.
-                </p>
-                <p>This action will create orders in Santa&apos;s database and prepare the gifts for delivery.</p>
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DialogClose>
-              <DialogClose asChild>
-                <Button onClick={onConfirmOrders} disabled={isOrdering}>
-                  {isOrdering ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    "Confirm Dispatch"
-                  )}
-                </Button>
-              </DialogClose>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      <CardFooter className="flex flex-col gap-2 pt-0">
+        {/* Buttons row */}
+        <div className="flex gap-2 w-full">
+          {/* Confirm orders dialog */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="flex-1" disabled={orderCount === 0 || isOrdering || !!confirmedBatchId}>
+                {isOrdering ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : confirmedBatchId ? (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Confirmed
+                  </>
+                ) : (
+                  <>
+                    <Rocket className="w-4 h-4 mr-2" />
+                    🎅 Confirm Orders
+                  </>
+                )}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <span className="text-2xl">🎅</span>
+                  Confirm Gift Dispatch
+                </DialogTitle>
+                <DialogDescription className="pt-2 space-y-2">
+                  <p>
+                    You are about to dispatch <strong>{orderCount} gifts</strong> totaling{" "}
+                    <strong>{formatCurrency(totalCost)}</strong>.
+                  </p>
+                  <p>This action will create orders in Santa&apos;s database and prepare the gifts for delivery.</p>
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+                <DialogClose asChild>
+                  <Button onClick={onConfirmOrders} disabled={isOrdering}>
+                    {isOrdering ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      "Confirm Dispatch"
+                    )}
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
-        {/* Export dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" disabled={!confirmedBatchId} title="Export orders">
-              <Download className="w-4 h-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <a href={`/api/orders/export?batchId=${confirmedBatchId}&format=csv`} download>
-                <FileSpreadsheet className="w-4 h-4 mr-2" />
-                Export CSV
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <a href={`/api/orders/export?batchId=${confirmedBatchId}&format=json`} download>
-                <FileJson className="w-4 h-4 mr-2" />
-                Export JSON
-              </a>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          {/* Export dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" disabled={!confirmedBatchId} title="Export orders">
+                <Download className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <a href={`/api/orders/export?batchId=${confirmedBatchId}&format=csv`} download>
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  Export CSV
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href={`/api/orders/export?batchId=${confirmedBatchId}&format=json`} download>
+                  <FileJson className="w-4 h-4 mr-2" />
+                  Export JSON
+                </a>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Buy Products button */}
+        {onBuyProducts && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button 
+                variant="secondary" 
+                className="w-full bg-green-600 hover:bg-green-700 text-white" 
+                disabled={orderCount === 0 || isBuying || !!purchaseResult?.success}
+              >
+                {isBuying ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Purchasing...
+                  </>
+                ) : purchaseResult?.success ? (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Purchased!
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    🛒 Buy Products
+                  </>
+                )}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <span className="text-2xl">🛒</span>
+                  Confirm Purchase
+                </DialogTitle>
+                <DialogDescription className="pt-2 space-y-2">
+                  <p>
+                    You are about to purchase <strong>protein bars</strong> for{" "}
+                    <strong>{orderCount} addresses</strong>.
+                  </p>
+                  <p className="text-yellow-600 dark:text-yellow-400">
+                    ⚠️ This will make REAL purchases using the shopping agent.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Recipient: Wei Tu
+                  </p>
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+                <DialogClose asChild>
+                  <Button 
+                    onClick={onBuyProducts} 
+                    disabled={isBuying}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {isBuying ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Purchasing...
+                      </>
+                    ) : (
+                      "Confirm Purchase"
+                    )}
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </CardFooter>
 
       {/* Success message */}
@@ -179,6 +265,23 @@ export function OrderSummary({
           </div>
         </div>
       )}
+
+      {/* Purchase result message */}
+      {purchaseResult && (
+        <div className="px-6 pb-4">
+          <div className={`flex items-center gap-2 text-sm rounded-lg px-3 py-2 ${
+            purchaseResult.success 
+              ? "text-green-500 bg-green-500/10" 
+              : "text-yellow-500 bg-yellow-500/10"
+          }`}>
+            <Check className="w-4 h-4 shrink-0" />
+            <span>
+              {purchaseResult.successCount} purchased, {purchaseResult.failedCount} failed
+            </span>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }
+

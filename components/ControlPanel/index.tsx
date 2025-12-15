@@ -54,6 +54,12 @@ type ControlPanelProps = {
   confirmedBatchId?: string;
   /** Estimated delivery date string */
   estimatedDelivery: string;
+  /** Callback to buy products via MCP shopping agent */
+  onBuyProducts?: () => Promise<void>;
+  /** Whether purchase is in progress */
+  isBuying?: boolean;
+  /** Purchase result after completion */
+  purchaseResult?: { success: boolean; successCount: number; failedCount: number };
 };
 
 /**
@@ -88,7 +94,10 @@ export function ControlPanel({
   onConfirmOrders,
   isCreatingOrders,
   confirmedBatchId,
-  estimatedDelivery
+  estimatedDelivery,
+  onBuyProducts,
+  isBuying,
+  purchaseResult
 }: ControlPanelProps) {
   // Calculate order summary data
   const orderCount = pairings.length;
@@ -155,6 +164,9 @@ export function ControlPanel({
             onConfirmOrders={onConfirmOrders}
             isOrdering={isCreatingOrders}
             confirmedBatchId={confirmedBatchId}
+            onBuyProducts={onBuyProducts}
+            isBuying={isBuying}
+            purchaseResult={purchaseResult}
           />
         </div>
       </ScrollArea>

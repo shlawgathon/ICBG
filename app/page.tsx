@@ -81,6 +81,10 @@ export default function HomePage() {
   const [confirmedBatchId, setConfirmedBatchId] = useState<string | undefined>();
   const [showDeliveryLines, setShowDeliveryLines] = useState(false);
 
+  // Purchase state
+  const [isBuying, setIsBuying] = useState(false);
+  const [purchaseResult, setPurchaseResult] = useState<{ success: boolean; successCount: number; failedCount: number } | undefined>();
+
   // Convex queries and mutations
   const giftedAddressIdsRaw = useQuery(api.orders.getAllGiftedAddressIds);
   const giftedAddressIds = useMemo(() => giftedAddressIdsRaw ?? [], [giftedAddressIdsRaw]);
@@ -373,6 +377,45 @@ export default function HomePage() {
     }
   }, [addresses, pairings, polygon, createBatch, createOrders]);
 
+  /**
+   * Purchases products via MCP shopping agent for all paired addresses.
+   * Uses hardcoded product (protein bars) and recipient (Wei Tu).
+   */
+  const handleBuyProducts = useCallback(async () => {
+    if (addresses.length === 0) return;
+
+    setIsBuying(true);
+    setPurchaseResult(undefined);
+
+    try {
+      const response = await fetch("/api/orders/purchase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ addresses })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to purchase products");
+      }
+
+      const data = await response.json();
+      setPurchaseResult({
+        success: data.success,
+        successCount: data.successCount || 0,
+        failedCount: data.failedCount || 0
+      });
+    } catch (error) {
+      console.error("Purchase error:", error);
+      setPurchaseResult({
+        success: false,
+        successCount: 0,
+        failedCount: addresses.length
+      });
+    } finally {
+      setIsBuying(false);
+    }
+  }, [addresses]);
+
   return (
     <div className="flex flex-col h-screen">
       <Header />
@@ -411,6 +454,9 @@ export default function HomePage() {
           isCreatingOrders={isCreatingOrders}
           confirmedBatchId={confirmedBatchId}
           estimatedDelivery={getEstimatedDelivery()}
+          onBuyProducts={handleBuyProducts}
+          isBuying={isBuying}
+          purchaseResult={purchaseResult}
         />
       </main>
 
