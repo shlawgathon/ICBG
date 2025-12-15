@@ -10,24 +10,29 @@ ICBG is a full-stack application that combines an interactive 3D globe interface
 
 - 🌍 **Interactive Globe Interface** - Draw polygons on a 3D globe to select delivery areas
 - 🏠 **Real-time Address Identification** - Fetch building addresses from OpenStreetMap Overpass API
-- 🤖 **AI-Powered Gift Pairing** - Intelligent gift recommendations based on household metadata
-- 📧 **Email Notifications** - Festive delivery notifications via AgentMail MCP
+- 🤖 **AI-Powered Gift Pairing** - Intelligent gift recommendations based on household metadata (powered by Grok-4)
+- 📧 **Email Notifications** - Festive delivery notifications via AgentMail MCP server
+- 🛒 **Automated Purchasing** - Direct product purchasing via Shopping Agent MCP server
 - 📦 **Order Management** - Create, track, and export delivery batches
 - 🎨 **Festive Dark Theme** - Holiday-themed UI with shadcn/ui components
 
 ## Tech Stack
 
-| Layer         | Technology   | Version       |
-| ------------- | ------------ | ------------- |
-| Framework     | Next.js      | 16.0.10       |
-| Language      | TypeScript   | 5.7.x         |
-| Runtime       | Node.js      | 22.x LTS      |
-| Database      | Convex       | 1.17.x        |
-| UI Components | shadcn/ui    | latest        |
-| Styling       | Tailwind CSS | 4.x           |
-| Mapping       | Mapbox GL JS | 3.17.0        |
-| Geospatial    | @turf/turf   | 7.3.1         |
-| AI/MCP        | dedalus-labs | 0.1.0-alpha.4 |
+| Layer         | Technology            | Version       |
+| ------------- | --------------------- | ------------- |
+| Framework     | Next.js               | 16.0.10       |
+| Language      | TypeScript            | 5.7.x         |
+| Runtime       | Node.js               | 22.x LTS      |
+| UI Library    | React                 | 19.x          |
+| Database      | Convex                | 1.17.x        |
+| UI Components | shadcn/ui             | latest        |
+| Styling       | Tailwind CSS          | 4.x           |
+| Mapping       | Mapbox GL JS          | 3.17.0        |
+| Map React     | react-map-gl          | 8.1.x         |
+| Geospatial    | @turf/turf            | 7.3.1         |
+| AI/MCP        | dedalus-labs          | 0.1.0-alpha.8 |
+| Data Fetching | @tanstack/react-query | 5.62.x        |
+| Icons         | lucide-react          | 0.468.x       |
 
 ## Getting Started
 
@@ -63,8 +68,13 @@ cp .env.example .env.local
 Edit `.env.local` with your API keys:
 
 ```env
+# Mapbox access token for globe visualization
 NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=pk.xxx
+
+# Convex deployment URL (auto-populated by `npx convex dev`)
 NEXT_PUBLIC_CONVEX_URL=https://xxx.convex.cloud
+
+# Dedalus Labs API key for AI gift pairing and MCP server access
 DEDALUS_API_KEY=sk-xxx
 ```
 
@@ -94,59 +104,89 @@ The app will be available at [http://localhost:3000](http://localhost:3000).
 icbg/
 ├── app/                    # Next.js App Router pages
 │   ├── api/               # API route handlers
-│   │   ├── addresses/     # Address identification
-│   │   ├── catalog/       # Product catalog
-│   │   ├── gifts/         # Gift pairing
-│   │   ├── notifications/ # Email notifications
-│   │   └── orders/        # Order export
-│   ├── orders/            # Order history page
+│   │   ├── addresses/     # Address identification (Overpass API)
+│   │   ├── catalog/       # Product catalog browsing
+│   │   ├── gifts/         # AI gift pairing
+│   │   ├── notifications/ # Email notifications (AgentMail MCP)
+│   │   └── orders/        # Order export & purchase (Shopping Agent MCP)
+│   ├── orders/            # Order history page (SSR with Convex)
 │   └── page.tsx           # Main mission control
 ├── components/            # React components
 │   ├── ui/               # shadcn/ui components
-│   ├── GlobeMap/         # Map and drawing components
-│   ├── ControlPanel/     # Sidebar controls
-│   └── OrderHistory/     # Order management
+│   ├── GlobeMap/         # Map, markers, and drawing components
+│   ├── ControlPanel/     # Sidebar workflow controls
+│   └── OrderHistory/     # Order batch management
 ├── convex/               # Convex database
-│   ├── schema.ts         # Database schema
-│   ├── orderBatches.ts   # Batch operations
-│   ├── orders.ts         # Order operations
-│   └── addressSelections.ts
+│   ├── schema.ts         # Database schema (batches, orders, selections)
+│   ├── orderBatches.ts   # Batch CRUD operations
+│   ├── orders.ts         # Order CRUD operations
+│   └── addressSelections.ts # Selection history
 ├── lib/                  # Utility libraries
-│   ├── types.ts          # TypeScript types
-│   ├── overpass.ts       # OSM Overpass client
-│   ├── dedalus.ts        # AI gift pairing
-│   ├── agentmail.ts      # Email notifications
-│   ├── mapbox.ts         # Map configuration
-│   └── utils.ts          # Utilities
+│   ├── types.ts          # TypeScript type definitions
+│   ├── overpass.ts       # OSM Overpass API client
+│   ├── dedalus.ts        # Dedalus SDK (AI + MCP orchestration)
+│   ├── agentmail.ts      # Email notification helpers
+│   ├── mapbox.ts         # Mapbox GL configuration
+│   └── utils.ts          # General utilities
 └── data/
-    └── catalog.json      # Mock product catalog
+    └── catalog.json      # Product catalog (20 items, 5 categories)
 ```
 
 ## Usage
 
 ### Mission Control Flow
 
-1. **Select Area** - Click "Select Area" and draw a polygon on the globe
+1. **Select Area** - Click "Select Area" (or press `D`) and draw a polygon on the globe
 2. **Review Addresses** - View identified addresses with household metadata
 3. **Pair Gifts** - Use AI or manual strategy to assign gifts
-4. **Send Notifications** - (Optional) Send delivery emails
-5. **Confirm Orders** - Create batch in database
-6. **Export** - Download CSV/JSON manifest
+4. **Send Notifications** - (Optional) Send festive delivery emails
+5. **Buy Products** - (Optional) Automated purchasing via Shopping Agent MCP
+6. **Confirm Orders** - Create batch in database
+7. **Export** - Download CSV/JSON manifest
+
+### Keyboard Shortcuts
+
+| Key      | Action              |
+| -------- | ------------------- |
+| `D`      | Toggle drawing mode |
+| `Escape` | Exit drawing mode   |
+
+### Gift Pairing Strategies
+
+| Strategy         | Description                                           |
+| ---------------- | ----------------------------------------------------- |
+| `ai-recommended` | AI-powered pairing using household metadata (default) |
+| `round-robin`    | Cycles through products in catalog order              |
+| `single-product` | Assigns the same product to all addresses             |
 
 ### API Endpoints
 
-| Endpoint                  | Method | Description                   |
-| ------------------------- | ------ | ----------------------------- |
-| `/api/addresses/identify` | POST   | Identify addresses in polygon |
-| `/api/gifts/pair`         | POST   | Pair gifts with addresses     |
-| `/api/notifications/send` | POST   | Send delivery emails          |
-| `/api/orders/export`      | GET    | Export orders as CSV/JSON     |
-| `/api/catalog`            | GET    | Browse product catalog        |
+| Endpoint                  | Method | Description                              |
+| ------------------------- | ------ | ---------------------------------------- |
+| `/api/addresses/identify` | POST   | Identify addresses in polygon            |
+| `/api/gifts/pair`         | POST   | Pair gifts with addresses                |
+| `/api/notifications/send` | POST   | Send delivery emails                     |
+| `/api/orders/export`      | GET    | Export orders as CSV/JSON                |
+| `/api/orders/purchase`    | POST   | Purchase products via Shopping Agent MCP |
+| `/api/catalog`            | GET    | Browse product catalog                   |
+
+### MCP Server Integrations
+
+The application leverages the following MCP (Model Context Protocol) servers via Dedalus Labs:
+
+| MCP Server                 | Purpose                                           |
+| -------------------------- | ------------------------------------------------- |
+| `vroom08/agentmail-mcp`    | Send festive delivery notification emails         |
+| `dw820/shopping-agent-mcp` | Automated product purchasing and order processing |
+
+### AI Model
+
+Gift pairing and agent orchestration use the `xai/grok-4-fast-non-reasoning` model via the Dedalus Labs SDK.
 
 ## Development
 
 ```bash
-# Run development servers
+# Run development servers (Next.js + Convex in parallel)
 npm run dev
 
 # Type check
@@ -155,8 +195,14 @@ npm run type-check
 # Lint
 npm run lint
 
+# Format code with Prettier
+npm run format
+
 # Build for production
 npm run build
+
+# Deploy Convex to production
+npm run convex:deploy
 ```
 
 ## License
